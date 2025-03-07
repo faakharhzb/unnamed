@@ -16,5 +16,6 @@ def load_images(image_dir: str, colorkey: int = None) -> list[pg.Surface]:
     return [load_image(image_path, colorkey) for image_path in sorted(listdir(image_dir))]
 
 
-def show_text(font_size: int, pos: int, color: int):
-    font = pg.font.Font('arial', font_size)
+def show_text(font_size: int, pos: int, color: int, bold: bool = False, italic: bool = False, text: str):
+    font = pg.font.SysFont('arial', font_size, bold, italic)
+		 font.render(text, True, )
