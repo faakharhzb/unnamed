@@ -1,7 +1,6 @@
 import pygame as pg
 import sys
 import random
-import time
 
 from scripts.settings import *
 
@@ -22,6 +21,7 @@ class Main:
 
     def run(self):
         while True:
+								screen.fill(BLACK)
             self.event_handler()
             pg.display.update()
             self.clock.tick(FPS)
