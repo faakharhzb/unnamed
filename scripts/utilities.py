@@ -1,6 +1,6 @@
 import pygame as pg
 import time
-from os import listdir
+from os import listdir, path
 
 def fps_independence(last_time: float) -> float:
     dt = time.time() - last_time
@@ -14,3 +14,7 @@ def load_image(image_path: str, colorkey: int = None) -> pg.Surface:
 
 def load_images(image_dir: str, colorkey: int = None) -> list[pg.Surface]:
     return [load_image(image_path, colorkey) for image_path in sorted(listdir(image_dir))]
+
+
+def show_text(font_size: int, pos: int, color: int):
+    font = pg.font.Font('arial', font_size)
