@@ -1,8 +1,11 @@
 import pygame as pg
+from pygame.locals import *
+
 import sys
 import random
 
 from scripts.settings import *
+from scripts.utilities import *
 
 class Main:
     def __init__(self):
@@ -15,7 +18,7 @@ class Main:
 
     def event_handler(self):
         for event in pg.event.get():
-            if event.type == pg.QUIT:
+            if event.type == QUIT:
                 pg.quit()
                 sys.exit()
 
@@ -24,7 +27,8 @@ class Main:
 								screen.fill(BLACK)
             self.event_handler()
             pg.display.update()
-            self.clock.tick(FPS)
+            self.dt = self.clock.tick(FPS) / 1000
+							 self.dt = min(self.dt, 3 / FPS)
 
 if __name__ == "__main__":
     main = Main()
