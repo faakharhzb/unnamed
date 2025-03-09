@@ -2,7 +2,6 @@ import pygame as pg
 from pygame.locals import *
 
 import sys
-import random
 
 from scripts.settings import *
 from scripts.utilities import *
