@@ -1,7 +1,5 @@
 import pygame as pg
 import sys
-import random
-import time
 
 from scripts.settings import *
 
