@@ -31,7 +31,7 @@ class Main:
         self.all_sprites = pg.sprite.Group()
         self.all_sprites.add(self.player)
 
-        self.dt = 0.17
+        self.dt = 0.017
 
     def event_handler(self) -> None:
         for event in pg.event.get():
@@ -42,12 +42,13 @@ class Main:
     def main_game(self, dt: float) -> None:
         self.background.fill((3, 200, 200))
 
-        self.bg_size = self.background.get_size()
+        self.bg_size = list(self.background.get_size())
 
-        self.player.update(self.bg_size, dt)
+        self.player.update(self.bg_size,  dt, 6)
 
         for sprite in self.all_sprites:
-            sprite.render(self.background)
+            self.background.blit(sprite.image, sprite.rect)
+            pg.draw.rect(self.background, 'red', sprite.rect, 5)
 
         self.screen.blit(pg.transform.scale(self.background, SIZE), (0, 0))
 
@@ -56,12 +57,12 @@ class Main:
             self.event_handler()
 
             self.dt = self.clock.tick(FPS) / 1000
-            self.dt = min(0.3, max(0.01, self.dt)) * 100
+            self.dt = min(0.03, max(0.001, self.dt)) * 100
 
             self.main_game(self.dt)
 
             show_text(
-                str(int(self.clock.get_fps())) + " FPS",
+                str(int(self.clock.get_fps())) + ' FPS',
                 self.fps_font,
                 "white",
                 [5, 0],
