@@ -2,8 +2,9 @@ import pygame as pg
 from pygame.locals import *
 import sys
 from scripts.settings import *
-from scripts.utilities import *
+from scripts.utilities import show_text, load_image, load_images
 from scripts.entities import Player
+from scripts.bullet import Bullet
 
 
 class Main:
@@ -24,14 +25,17 @@ class Main:
             "player": load_image(BASE_IMAGE_PATH + "player.png", "white"),
         }
 
+        self.player_pos = [self.bg_size[0] / 2, self.bg_size[1] / 2]
         self.player = Player(
-            [self.bg_size[0] / 2, self.bg_size[1] / 2], self.images["player"]
+           self.player_pos , self.images["player"]
         )
 
         self.all_sprites = pg.sprite.Group()
         self.all_sprites.add(self.player)
 
         self.dt = 0.017
+
+        self.base_speed = [0, 0]
 
     def event_handler(self) -> None:
         for event in pg.event.get():
@@ -44,7 +48,12 @@ class Main:
 
         self.bg_size = list(self.background.get_size())
 
-        self.player.update(self.bg_size,  dt, 6)
+        self.player.update(self.bg_size,  dt, 3)
+        key = pg.key.get_pressed()
+        if key[K_e]:
+            bullet = Bullet([50, 50], self.player_pos, "white", 0)
+            bullet.update(dt, 100)
+            pg.draw.rect(self.background, 'red', bullet.rect, 5)
 
         for sprite in self.all_sprites:
             self.background.blit(sprite.image, sprite.rect)
@@ -69,6 +78,10 @@ class Main:
                 self.screen,
             )
             
+            if self.player.velocity != self.base_speed:
+                print('speed: ', self.player.velocity)
+                self.base_speed = self.player.velocity
+
             pg.display.flip()
 
 
