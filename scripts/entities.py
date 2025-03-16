@@ -4,7 +4,7 @@ class Entity(pg.sprite.Sprite):
     def __init__(self, pos: list[int], image: pg.Surface) -> None:
         super().__init__()
         self.image = image
-        self.rect = self.image.get_frect(center=pos)
+        self.rect = self.image.get_rect(center=pos)
         self.position = pg.Vector2(pos)
         self.velocity = pg.Vector2(0, 0)
 

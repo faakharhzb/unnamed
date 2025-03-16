@@ -18,7 +18,7 @@ class Main:
         self.bg_size = self.background.get_size()
 
         self.fps_font = pg.font.SysFont("arial", 20)
-        self.clock = pg.Clock()
+        self.clock = pg.time.Clock()
 
         self.images = {"player": load_image(BASE_IMAGE_PATH + "player.png", "white")}
 
@@ -28,8 +28,8 @@ class Main:
         self.all_sprites = pg.sprite.Group(self.player)
         self.bullets = pg.sprite.Group()
 
-        self.dt = 0.017
-        self.bullet_cooldown = 0
+        self.dt = 1.7
+        self.bullet_cooldown = 5
 
     def event_handler(self) -> None:
         for event in pg.event.get():
@@ -38,14 +38,18 @@ class Main:
                 sys.exit()
 
     def shoot(self, dt) -> None:
+
         if self.bullet_cooldown == 0:
             bullet = Bullet([12, 8], self.player.position.xy, 0, 45, 'black')
-            bullet.update(dt, self.background)
 
             self.bullets.add(bullet)
-            self.bullet_cooldown = 0.2
+            self.all_sprites.add(bullet)
+
+            self.bullet_cooldown = 20
+
         else:
-            self.bullet_cooldown -= dt / 100
+            self.bullet_cooldown -= 1
+
 
     def main_game(self, dt: float) -> None:
         self.background.fill((3, 200, 200))
@@ -53,6 +57,9 @@ class Main:
         key = pg.key.get_pressed()
         if key[K_e]:
             self.shoot(dt)
+
+        for bullet in self.bullets:
+            bullet.update(dt, self.background)
 
         self.player.update(self.bg_size, dt, 5)
 
@@ -77,8 +84,6 @@ class Main:
 
             self.screen.blit(pg.transform.scale(self.background, SIZE), (0, 0))
             pg.display.flip()
-
-            print(len(self.all_sprites.sprites()))
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 from pygame.sprite import Sprite
 from pygame.math import Vector2
-from pygame import FRect, Surface, Color
+from pygame import Rect, Surface, Color
 import math
 
 class Bullet(Sprite): 
@@ -10,7 +10,7 @@ class Bullet(Sprite):
         self.colour = colour
         self.image.fill(self.colour)
 
-        self.rect = FRect((pos[0] - size[0] / 2, pos[1] - size[1] / 2), size)
+        self.rect = Rect((pos[0] - size[0] / 2, pos[1] - size[1] / 2), size)
 
         self.speed = speed
         self.position = Vector2(pos)
@@ -19,9 +19,8 @@ class Bullet(Sprite):
                                 math.sin(math.radians(self.angle)))
 
     def update(self, dt: float, screen: Surface): 
-        self.velocity.x = self.speed * dt
 
-        self.position += self.velocity
+        self.position += self.velocity * dt
         self.rect.centerx, self.rect.centery = self.position.x, self.position.y
 
         if not screen.get_rect().contains(self.rect):
