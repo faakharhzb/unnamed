@@ -1,6 +1,7 @@
 import pygame as pg
 from pygame.locals import *
 import sys
+import math
 from scripts.settings import *
 from scripts.utilities import show_text, load_image
 from scripts.entities import Player
@@ -38,9 +39,13 @@ class Main:
                 sys.exit()
 
     def shoot(self, dt) -> None:
+        mousepos = pg.mouse.get_pos()
+
+        self.angle = math.degrees(math.atan2(self.player.rect.centery - mousepos[1], self.player.rect.centerx - mousepos[0]))
+        print(self.angle)
 
         if self.bullet_cooldown == 0:
-            bullet = Bullet([12, 8], self.player.position.xy, 0, 45, 'black')
+            bullet = Bullet([12, 8], self.player.position.xy, self.angle, 6, 'black')
 
             self.bullets.add(bullet)
             self.all_sprites.add(bullet)
@@ -65,6 +70,7 @@ class Main:
 
     def run(self) -> None:
         while True:
+            mousepos = pg.mouse.get_pos()
             self.event_handler()
             self.dt = self.clock.tick(FPS) / 1000
             self.dt = min(0.03, max(0.001, self.dt)) * 100
@@ -81,6 +87,9 @@ class Main:
 
             for entity in self.all_sprites:
                 self.background.blit(entity.image, entity.rect)
+
+            pg.draw.rect(self.background, 'red', pg.Rect(mousepos[0], mousepos[1], 10, 10))
+
 
             self.screen.blit(pg.transform.scale(self.background, SIZE), (0, 0))
             pg.display.flip()

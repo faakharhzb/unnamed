@@ -15,8 +15,8 @@ class Bullet(Sprite):
         self.speed = speed
         self.position = Vector2(pos)
         self.angle = angle
-        self.velocity = Vector2(math.cos(math.radians(self.angle)),
-                                math.sin(math.radians(self.angle)))
+        self.velocity = Vector2(math.cos(math.radians(self.angle)) * speed,
+                                math.sin(math.radians(self.angle)) * speed)
 
     def update(self, dt: float, screen: Surface): 
 
