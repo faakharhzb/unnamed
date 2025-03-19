@@ -29,6 +29,8 @@ class Player(Entity):
         super().__init__(pos, image)
 
     def update(self, screensize: list[int], dt: float, speed: int) -> None:
+        speed *= dt
+        
         keys = pg.key.get_pressed()
         self.velocity = pg.Vector2(0, 0)
 

@@ -13,9 +13,9 @@ class Main:
         pg.init()
 
         pg.display.set_caption("unnamed game")
-        self.screen = pg.display.set_mode(SIZE)
+        self.screen = pg.display.set_mode(SIZE, SCREEN_FLAGS)
 
-        self.background = pg.Surface((600, 500))
+        self.background = pg.Surface(SIZE)
         self.bg_size = self.background.get_size()
 
         self.fps_font = pg.font.SysFont("arial", 20)
@@ -41,8 +41,8 @@ class Main:
     def shoot(self, dt) -> None:
         mousepos = pg.mouse.get_pos()
 
-        self.angle = math.degrees(math.atan2(self.player.rect.centery - mousepos[1], self.player.rect.centerx - mousepos[0]))
-        print(self.angle)
+        self.angle = math.degrees(math.atan2(self.player.rect.centery - mousepos[1], self.player.rect.centerx - mousepos[0])) 
+
 
         if self.bullet_cooldown == 0:
             bullet = Bullet([12, 8], self.player.position.xy, self.angle, 6, 'black')
@@ -70,10 +70,12 @@ class Main:
 
     def run(self) -> None:
         while True:
-            mousepos = pg.mouse.get_pos()
+            self.screen.blit(pg.transform.scale(self.background, SIZE), (0, 0))
+
             self.event_handler()
+
             self.dt = self.clock.tick(FPS) / 1000
-            self.dt = min(0.03, max(0.001, self.dt)) * 100
+            self.dt = min(0.03, max(0.01, self.dt)) * 100
 
             self.main_game(self.dt)
 
@@ -82,16 +84,12 @@ class Main:
                 self.fps_font,
                 "white",
                 [5, 0],
-                self.screen,
+                self.background,
             )
 
             for entity in self.all_sprites:
                 self.background.blit(entity.image, entity.rect)
 
-            pg.draw.rect(self.background, 'red', pg.Rect(mousepos[0], mousepos[1], 10, 10))
-
-
-            self.screen.blit(pg.transform.scale(self.background, SIZE), (0, 0))
             pg.display.flip()
 
 

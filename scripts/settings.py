@@ -1,4 +1,7 @@
+from pygame.locals import DOUBLEBUF
+
 SIZE = WIDTH, HEIGHT = [800, 600]
+SCREEN_FLAGS = DOUBLEBUF
 
 FPS = 60
 
