@@ -8,7 +8,7 @@ class Entity(pg.sprite.Sprite):
         self.position = pg.Vector2(pos)
         self.velocity = pg.Vector2(0, 0)
 
-    def update(self, screensize: list[int], speed: int, dt:float) -> None:
+    def update(self, screensize: list[int], speed: int) -> None:
         self.position += self.velocity
         self.rect.centerx, self.rect.centery = self.position.x, self.position.y
 
@@ -22,14 +22,13 @@ class Entity(pg.sprite.Sprite):
             self.rect.bottom = screensize[1]
 
         if self.velocity.length() != 0:
-            self.velocity = self.velocity.normalize() * speed * dt
+            self.velocity = self.velocity.normalize() * speed
 
 class Player(Entity):
     def __init__(self, pos: list[int], image: pg.Surface) -> None:
         super().__init__(pos, image)
 
-    def update(self, screensize: list[int], dt: float, speed: int) -> None:
-        speed *= dt
+    def update(self, screensize: list[int], speed: int) -> None:
         
         keys = pg.key.get_pressed()
         self.velocity = pg.Vector2(0, 0)
@@ -43,4 +42,4 @@ class Player(Entity):
         if keys[pg.K_s]:
             self.velocity.y = speed
         
-        super().update(screensize, speed, dt)
+        super().update(screensize, speed)

@@ -45,7 +45,7 @@ class Main:
 
 
         if self.bullet_cooldown == 0:
-            bullet = Bullet([12, 8], self.player.position.xy, self.angle, 6, 'black')
+            bullet = Bullet([12, 8], self.player.position.xy, self.angle, 6 * dt, 'black')
 
             self.bullets.add(bullet)
             self.all_sprites.add(bullet)
@@ -66,7 +66,7 @@ class Main:
         for bullet in self.bullets:
             bullet.update(dt, self.background)
 
-        self.player.update(self.bg_size, dt, 5)
+        self.player.update(self.bg_size, 5 * dt)
 
     def run(self) -> None:
         while True:
