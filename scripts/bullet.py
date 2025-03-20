@@ -18,9 +18,9 @@ class Bullet(Sprite):
         self.velocity = Vector2(math.cos(math.radians(-self.angle)) * speed,
                                 math.sin(math.radians(-self.angle)) * speed)
 
-    def update(self, dt: float, screen: Surface): 
+    def update(self, screen: Surface): 
 
-        self.position += self.velocity * dt
+        self.position += self.velocity
         self.rect.centerx, self.rect.centery = self.position.x, self.position.y
 
         if not screen.get_rect().contains(self.rect):
