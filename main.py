@@ -29,28 +29,21 @@ class Main:
         self.all_sprites = pg.sprite.Group(self.player)
         self.bullets = pg.sprite.Group()
 
-        self.dt = 1.7
-        self.bullet_cooldown = 5
-
-    def event_handler(self) -> None:
-        for event in pg.event.get():
-            if event.type == QUIT:
-                pg.quit()
-                sys.exit()
-
+        self.dt = 0.017
+        self.bullet_cooldown = 10
+        
     def shoot(self, dt) -> None:
         mousepos = pg.mouse.get_pos()
 
-        self.angle = math.degrees(math.atan2(self.player.rect.centery - mousepos[1], self.player.rect.centerx - mousepos[0])) 
-
+        self.angle = math.degrees(math.atan2(mousepos[1] - self.player.position.y, mousepos[0] - self.player.position.x)) 
 
         if self.bullet_cooldown == 0:
-            bullet = Bullet([12, 8], self.player.position.xy, self.angle, 6 * dt, 'black')
+            bullet = Bullet([12, 8], self.player.position.xy, self.angle, 6, 'black')
 
             self.bullets.add(bullet)
             self.all_sprites.add(bullet)
 
-            self.bullet_cooldown = 20
+            self.bullet_cooldown = 10
 
         else:
             self.bullet_cooldown -= 1
@@ -66,20 +59,12 @@ class Main:
         for bullet in self.bullets:
             bullet.update(dt, self.background)
 
-        self.player.update(self.bg_size, 5 * dt)
+        self.player.update(self.bg_size, dt, 5)
 
-    def run(self) -> None:
-        while True:
-            self.screen.blit(pg.transform.scale(self.background, SIZE), (0, 0))
+    def render(self) -> None:
+        self.screen.blit(pg.transform.scale(self.background, SIZE), (0, 0))
 
-            self.event_handler()
-
-            self.dt = self.clock.tick(FPS) / 1000
-            self.dt = min(0.03, max(0.01, self.dt)) * 100
-
-            self.main_game(self.dt)
-
-            show_text(
+        show_text(
                 str(int(self.clock.get_fps())) + ' FPS',
                 self.fps_font,
                 "white",
@@ -87,10 +72,25 @@ class Main:
                 self.background,
             )
 
-            for entity in self.all_sprites:
-                self.background.blit(entity.image, entity.rect)
+        for entity in self.all_sprites:
+            self.background.blit(entity.image, entity.rect)
 
-            pg.display.flip()
+        pg.display.flip()
+
+    def run(self) -> None:
+        while True:
+
+							 for event in pg.event.get():
+                if event.type == QUIT:
+                    pg.quit()
+                    sys.exit()
+
+            self.dt = self.clock.tick(FPS) / 1000
+            self.dt = min(0.03, max(0.01, self.dt))
+
+            self.main_game(self.dt)
+
+            self.render()
 
 
 if __name__ == "__main__":
