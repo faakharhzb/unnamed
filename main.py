@@ -1,11 +1,9 @@
 import pygame as pg
-from pygame.locals import *
+from pygame.locals import QUIT, K_e
 
 import sys
 import math
 from time import time
-from pathlib import Path
-import os.path
 
 from scripts.settings import *
 from scripts.utilities import show_text, load_image
@@ -14,7 +12,6 @@ from scripts.bullet import Bullet
 
 class Main:
     def __init__(self) -> None:
-        Path.cwd = os.path.dirname(__file__)
 
         pg.init()
 
@@ -46,7 +43,7 @@ class Main:
 
         current_time = time() * 1000
 
-        if current_time - self.bullet_cooldown >= 300:
+        if current_time - self.bullet_cooldown >= 200:
             bullet = Bullet([12, 8], self.player.position.xy, self.angle, 690 * self.dt, 'black')
             self.bullets.add(bullet)
             self.all_sprites.add(bullet)
