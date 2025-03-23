@@ -31,6 +31,7 @@ class Entity(pg.sprite.Sprite):
 class Player(Entity):
     def __init__(self, pos: list[int], image: pg.Surface) -> None:
         super().__init__(pos, image)
+        self.ammo = 30
 
     def update(self, screensize: list[int], speed: int) -> None:
         super().update(screensize, speed)

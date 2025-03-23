@@ -28,6 +28,7 @@ class Bullet(Sprite):
 
 class Obtainable_Item(Sprite):
     def __init__(self, image: pg.Surface, pos: tuple[float, float]):
+        super().__init__()
         self.image = image
         self.rect = self.image.get_rect(center=pos)
         self.position = pg.Vector2(pos)
