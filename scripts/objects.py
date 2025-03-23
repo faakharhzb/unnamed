@@ -6,10 +6,9 @@ class Bullet(Sprite):
     def __init__(self, size: tuple[int, int], pos: tuple[float, float], angle: float, speed: float, colour: pg.Color): 
         super().__init__()
         self.image = pg.Surface(size)
-        self.colour = colour
-        self.image.fill(self.colour)
+        self.image.fill(colour)
 
-        self.rect = pg.Rect((pos[0] - size[0] / 2, pos[1] - size[1] / 2), size)
+        self.rect = image.get_rect(center = pos)
 
         self.speed = speed
         self.position = pg.Vector2(pos)
