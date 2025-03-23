@@ -8,7 +8,7 @@ from time import time
 from scripts.settings import *
 from scripts.utilities import show_text, load_image
 from scripts.entities import Player
-from scripts.bullet import Bullet
+from scripts.objects import Bullet, Obtainable_Item
 
 class Main:
     def __init__(self) -> None:
@@ -71,16 +71,16 @@ class Main:
                     sys.exit()
 
             self.dt = self.clock.tick(FPS) / 1000
-            self.dt = min(0.03, max(0.01, self.dt))
 
             self.main_game()
 
             for entity in self.all_sprites:
                 self.background.blit(entity.image, entity.rect)
 
-            self.screen.blit(pg.transform.scale(self.background, SIZE), (0, 0))
-
             show_text(f"{int(self.clock.get_fps())} FPS", self.fps_font, "white", [5, 0], self.background)
+
+            self.screen.blit(self.background, (0, 0))
+            
             pg.display.flip()
 
 
