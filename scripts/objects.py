@@ -35,3 +35,21 @@ class Obtainable_Item(Sprite):
 
     def collision(self, collide_object: pg.Rect):
         return self.rect.colliderect(collide_object)
+    
+class Gun(Sprite):
+    def __init__(self, image: pg.Surface, pos: list[int, int]):
+        super().__init__()
+        self.base_image = image
+        self.image = self.base_image.copy()
+
+        self.position = pg.Vector2(pos)
+        self.rect = self.image.get_rect(center = pos)
+
+
+    def update(self, angle: int, pos: list[int, int]):
+        self.position = pg.Vector2(pos)
+        self.rect.centerx, self.rect.centery = self.position.x, self.position.y
+        self.image = pg.transform.rotate(self.base_image, -angle)
+
+
+

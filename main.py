@@ -1,5 +1,5 @@
 import pygame as pg
-from pygame.locals import QUIT, K_e
+from pygame.locals import QUIT
 import sys
 import math
 import random
@@ -7,7 +7,7 @@ import random
 from scripts.settings import *
 from scripts.utilities import show_text, load_image
 from scripts.entities import Player
-from scripts.objects import Bullet, Obtainable_Item
+from scripts.objects import Bullet, Obtainable_Item, Gun
 
 class Main:
     def __init__(self) -> None:
@@ -22,11 +22,13 @@ class Main:
         self.fps_font = pg.font.SysFont("arial", 20)
         self.clock = pg.time.Clock()
 
-        self.images = {"player": load_image(BASE_IMAGE_PATH + "player.png", "white")}
+        self.images = {"player": load_image(BASE_IMAGE_PATH + "player.png", "white"),
+                       'rifle': pg.transform.scale_by(load_image(BASE_IMAGE_PATH + 'guns/rifle.png', 'white'), 1.24)}
 
         self.player = Player([self.bg_size[0] / 2, self.bg_size[1] / 2], self.images["player"])
+        self.rifle = Gun(self.images['rifle'], self.player.position.xy)
 
-        self.all_sprites = pg.sprite.Group(self.player)
+        self.all_sprites = pg.sprite.Group(self.player, self.rifle)
         self.bullets = pg.sprite.Group()
         self.ammos = pg.sprite.Group()
 
@@ -34,11 +36,14 @@ class Main:
         self.bullet_cooldown = pg.time.get_ticks()
         self.ammo_delay = pg.time.get_ticks()
 
+        self.mousepos = pg.mouse.get_pos()
+
+        self.angle = math.degrees(math.atan2(self.mousepos[1] - self.player.position.y, self.mousepos[0] - self.player.position.x))
+
     def shoot(self) -> None:
         mousepos = pg.mouse.get_pos()
-        self.angle = math.degrees(math.atan2(mousepos[1] - self.player.position.y, mousepos[0] - self.player.position.x))
 
-        if pg.time.get_ticks() - self.bullet_cooldown >= 150:
+        if pg.time.get_ticks() - self.bullet_cooldown >= 170:
             bullet = Bullet([12, 12], self.player.position.xy, self.angle, 700 * self.dt, 'black')
             self.player.ammo -= 1
             self.bullets.add(bullet)
@@ -55,6 +60,9 @@ class Main:
 
     def main_game(self) -> None:
         self.background.fill((3, 200, 200))
+        self.mousepos = pg.mouse.get_pos()
+
+        self.angle = math.degrees(math.atan2(self.mousepos[1] - self.player.position.y, self.mousepos[0] - self.player.position.x))
 
         if pg.time.get_ticks() - self.ammo_delay >= 5000:
             self.spawn_ammo()
@@ -64,16 +72,18 @@ class Main:
             if ammo.collision(self.player.rect):
                 self.all_sprites.remove(ammo)
                 self.ammos.remove(ammo)
-                self.player.ammo += 10
+                self.player.ammo += 20
 
         show_text(f"Ammo: {self.player.ammo}", self.fps_font, "white", [5, 50], self.background)
 
-        key = pg.key.get_pressed()
-        if key[K_e] and self.player.ammo != 0:
+        if pg.mouse.get_pressed() == (1, 0, 0) and self.player.ammo != 0:
             self.shoot()
         for bullet in self.bullets:
             bullet.update(self.background)
+
         self.player.update(self.bg_size, 400 * self.dt)
+
+        self.rifle.update(self.angle, self.player.position.xy)
 
     def run(self) -> None:
         while True:
@@ -85,10 +95,9 @@ class Main:
             self.main_game()
             for entity in self.all_sprites:
                 self.background.blit(entity.image, entity.rect)
-            show_text(f"{int(self.clock.get_fps())} FPS", self.fps_font, "white", [5, 0], self.background)
+            show_text(f"{int(self.clock.get_fps() % 60)} FPS", self.fps_font, "white", [5, 0], self.background)
             self.screen.blit(self.background, (0, 0))
             pg.display.flip()
 
 if __name__ == "__main__":
-    main = Main()
-    main.run()
+    Main().run()
