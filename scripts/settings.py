@@ -6,4 +6,3 @@ SCREEN_FLAGS = DOUBLEBUF
 FPS = 60
 
 BASE_IMAGE_PATH = "assets/images/"
-

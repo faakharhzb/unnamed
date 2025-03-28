@@ -1,5 +1,6 @@
 import pygame as pg
 
+
 class Entity(pg.sprite.Sprite):
     def __init__(self, pos: list[int], image: pg.Surface) -> None:
         super().__init__()
@@ -14,19 +15,13 @@ class Entity(pg.sprite.Sprite):
 
         self.key = pg.key.get_pressed()
 
-        if self.rect.left < 0:
-            self.rect.left = 0
-        if self.rect.right > screensize[0]:
-            self.rect.right = screensize[0]
-        if self.rect.top < 0:
-            self.rect.top = 0
-        if self.rect.bottom > screensize[1]:
-            self.rect.bottom = screensize[1]
+        self.rect.clamp_ip(pg.Rect((0, 0), screensize))
 
         if self.velocity.length() != 0:
             self.velocity = self.velocity.normalize() * speed
 
         self.velocity = pg.Vector2(0, 0)
+
 
 class Player(Entity):
     def __init__(self, pos: list[int], image: pg.Surface) -> None:
@@ -44,4 +39,3 @@ class Player(Entity):
             self.velocity.y = -speed
         if self.key[pg.K_s]:
             self.velocity.y = speed
-        

@@ -2,9 +2,9 @@ import pygame as pg
 from os import path, listdir
 
 
-def load_image(image_path: str, colorkey: int, alpha: bool = False) -> pg.Surface:
+def load_image(image_path: str, colorkey: pg.Color, alpha: bool = False) -> pg.Surface:
     image = pg.image.load(image_path)
-    image.set_colorkey(colorkey)
+    image.set_colorkey(colorkey) if not alpha else False
     return image.convert_alpha() if alpha else image.convert()
 
 
