@@ -14,10 +14,9 @@ class Bullet(Sprite):
     ):
         super().__init__()
         self.image = pg.Surface(size)
-        self.colour = colour
-        self.image.fill(self.colour)
+        self.image.fill(colour)
 
-        self.rect = pg.Rect((pos[0] - size[0] / 2, pos[1] - size[1] / 2), size)
+        self.rect = image.get_rect(center = pos)
 
         self.speed = speed
         self.position = pg.Vector2(pos)
