@@ -109,12 +109,13 @@ class Main:
 
         if pg.mouse.get_pressed() == (1, 0, 0) and self.player.ammo != 0:
             self.shoot()
+
         for bullet in self.bullets:
             bullet.update(self.background)
 
         self.player.update(self.bg_size, 400 * self.dt)
 
-        self.rifle.update(self.angle, self.player.rect.center)
+        self.rifle.update(self.angle, (self.player.rect.centerx, self.player.rect.centery))
 
     def run(self) -> None:
         while True:
@@ -128,7 +129,7 @@ class Main:
             self.main_game()
 
             for entity in self.all_sprites:
-                self.background.blit(entity.image, entity.rect)
+                entity.draw(self.background)
 
             show_text(
                 f"{int(self.clock.get_fps())} FPS",

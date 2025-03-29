@@ -16,7 +16,7 @@ class Bullet(Sprite):
         self.image = pg.Surface(size)
         self.image.fill(colour)
 
-        self.rect = image.get_rect(center = pos)
+        self.rect = self.image.get_rect(center = pos)
 
         self.speed = speed
         self.position = pg.Vector2(pos)
@@ -33,6 +33,9 @@ class Bullet(Sprite):
         if not screen.get_rect().contains(self.rect):
             self.kill()
 
+    def draw(self, screen: pg.Surface) -> None:
+        screen.blit(self.image, self.position)
+
 
 class Obtainable_Item(Sprite):
     def __init__(self, image: pg.Surface, pos: tuple[float, float]):
@@ -43,10 +46,13 @@ class Obtainable_Item(Sprite):
 
     def collision(self, collide_object: pg.Rect):
         return self.rect.colliderect(collide_object)
+    
+    def draw(self, screen: pg.Surface) -> None:
+        screen.blit(self.image, self.position)
 
 
 class Gun(Sprite):
-    def __init__(self, image: pg.Surface, pos: list[int, int]):
+    def __init__(self, image: pg.Surface, pos: list[int, int]) -> None:
         super().__init__()
         self.base_image = image
         self.image = self.base_image.copy()
@@ -54,7 +60,16 @@ class Gun(Sprite):
         self.position = pg.Vector2(pos)
         self.rect = self.image.get_rect(center=pos)
 
-    def update(self, angle: int, pos: list[int, int]):
+    def update(self, angle: int, pos: list[int, int]) -> None:
         self.position = pg.Vector2(pos)
-        self.rect.centerx, self.rect.centery = self.position.x, self.position.y
-        self.image = pg.transform.rotate(self.base_image, -angle)
+        self.rect.center = self.position.x, self.position.y
+
+        if angle > 90 or angle < -90:
+            self.image = pg.transform.rotate(pg.transform.flip(self.base_image, False, True), -angle)
+
+        else: 
+            self.image = pg.transform.rotate(pg.transform.flip(self.base_image, False, False), -angle)
+
+    def draw(self, screen: pg.Surface) -> None:
+        screen.blit(self.image, (self.position.x - (self.image.get_width() // 2), self.position.y - (self.image.get_height() // 2)))
+

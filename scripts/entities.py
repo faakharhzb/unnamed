@@ -22,6 +22,9 @@ class Entity(pg.sprite.Sprite):
 
         self.velocity = pg.Vector2(0, 0)
 
+    def draw(self, screen: pg.Surface) -> None:
+        screen.blit(self.image, self.rect)
+
 
 class Player(Entity):
     def __init__(self, pos: list[int], image: pg.Surface) -> None:
@@ -39,3 +42,6 @@ class Player(Entity):
             self.velocity.y = -speed
         if self.key[pg.K_s]:
             self.velocity.y = speed
+
+    def draw(self, screen):
+        super().draw(screen)
