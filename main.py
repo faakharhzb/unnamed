@@ -3,17 +3,15 @@ from pygame.locals import QUIT
 import sys
 import math
 import random
-
 from scripts.settings import *
 from scripts.utilities import show_text, load_image
-from scripts.entities import Player
+from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
 
 
 class Main:
     def __init__(self) -> None:
         pg.init()
-
         pg.display.set_caption("Unnamed Game")
         self.screen = pg.display.set_mode(SIZE, SCREEN_FLAGS)
 
@@ -28,14 +26,22 @@ class Main:
                 load_image(BASE_IMAGE_PATH + "player.png", "white"), 1.3
             ),
             "rifle": load_image(BASE_IMAGE_PATH + "guns/rifle.png", (255, 255, 255)),
+            "enemy": load_image(BASE_IMAGE_PATH + "enemy.png", "white"),
         }
+
+        self.mousepos = pg.mouse.get_pos()
 
         self.player = Player(
             [self.bg_size[0] / 2, self.bg_size[1] / 2], self.images["player"]
         )
         self.rifle = Gun(self.images["rifle"], self.player.rect.center)
-
-        self.all_sprites = pg.sprite.Group(self.player, self.rifle)
+        self.enemy = Enemy(
+            [random.randint(10, WIDTH), random.randint(10, HEIGHT)],
+            self.images["enemy"],
+            500,
+            0,
+        )
+        self.all_sprites = pg.sprite.Group(self.player, self.rifle, self.enemy)
         self.bullets = pg.sprite.Group()
         self.ammos = pg.sprite.Group()
 
@@ -43,21 +49,21 @@ class Main:
         self.bullet_cooldown = pg.time.get_ticks()
         self.ammo_delay = pg.time.get_ticks()
 
+    def shoot(self) -> None:
         self.mousepos = pg.mouse.get_pos()
-
-        self.angle = math.degrees(
+        player_to_mouse_angle = math.degrees(
             math.atan2(
                 self.mousepos[1] - self.player.position.y,
                 self.mousepos[0] - self.player.position.x,
             )
         )
-
-    def shoot(self) -> None:
-        mousepos = pg.mouse.get_pos()
-
         if pg.time.get_ticks() - self.bullet_cooldown >= 170:
             bullet = Bullet(
-                [12, 12], self.player.position.xy, self.angle, 700 * self.dt, "black"
+                [12, 12],
+                self.player.position.xy,
+                player_to_mouse_angle,
+                700 * self.dt,
+                "black",
             )
             self.player.ammo -= 1
             self.bullets.add(bullet)
@@ -80,14 +86,26 @@ class Main:
 
     def main_game(self) -> None:
         self.background.fill((3, 200, 200))
+
         self.mousepos = pg.mouse.get_pos()
 
-        self.angle = math.degrees(
+        player_to_mouse_angle = math.degrees(
             math.atan2(
                 self.mousepos[1] - self.player.position.y,
                 self.mousepos[0] - self.player.position.x,
             )
         )
+        enemy_to_player_angle = math.degrees(
+            math.atan2(
+                self.player.position.y - self.enemy.position.y,
+                self.player.position.x - self.enemy.position.x,
+            )
+        )
+        self.enemy.angle = enemy_to_player_angle
+        
+        if self.enemy.collision(self.player.rect):
+            pg.quit()
+            sys.exit()
 
         if pg.time.get_ticks() - self.ammo_delay >= 5000:
             self.spawn_ammo()
@@ -114,8 +132,10 @@ class Main:
             bullet.update(self.background)
 
         self.player.update(self.bg_size, 400 * self.dt)
-
-        self.rifle.update(self.angle, (self.player.rect.centerx, self.player.rect.centery))
+        self.rifle.update(
+            player_to_mouse_angle,
+            (self.player.rect.centerx, self.player.rect.centery),
+        )
 
     def run(self) -> None:
         while True:
@@ -125,14 +145,13 @@ class Main:
                     sys.exit()
 
             self.dt = self.clock.tick(FPS) / 1000
-
             self.main_game()
 
             for entity in self.all_sprites:
                 entity.draw(self.background)
 
             show_text(
-                f"{int(self.clock.get_fps())} FPS",
+                f"{self.clock.get_fps() // 1} FPS",
                 self.fps_font,
                 "white",
                 [5, 0],

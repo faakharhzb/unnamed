@@ -1,4 +1,5 @@
 import pygame as pg
+import math
 
 
 class Entity(pg.sprite.Sprite):
@@ -11,16 +12,8 @@ class Entity(pg.sprite.Sprite):
 
     def update(self, screensize: list[int], speed: int) -> None:
         self.position += self.velocity
-        self.rect.centerx, self.rect.centery = self.position.x, self.position.y
-
-        self.key = pg.key.get_pressed()
-
+        self.rect.center = self.position
         self.rect.clamp_ip(pg.Rect((0, 0), screensize))
-
-        if self.velocity.length() != 0:
-            self.velocity = self.velocity.normalize() * speed
-
-        self.velocity = pg.Vector2(0, 0)
 
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(self.image, self.rect)
@@ -32,16 +25,42 @@ class Player(Entity):
         self.ammo = 50
 
     def update(self, screensize: list[int], speed: int) -> None:
+        self.velocity = pg.Vector2(0, 0)
+        keys = pg.key.get_pressed()
+        if keys[pg.K_a]:
+            self.velocity.x = -speed
+        if keys[pg.K_d]:
+            self.velocity.x = speed
+        if keys[pg.K_w]:
+            self.velocity.y = -speed
+        if keys[pg.K_s]:
+            self.velocity.y = speed
         super().update(screensize, speed)
 
-        if self.key[pg.K_a]:
-            self.velocity.x = -speed
-        if self.key[pg.K_d]:
-            self.velocity.x = speed
-        if self.key[pg.K_w]:
-            self.velocity.y = -speed
-        if self.key[pg.K_s]:
-            self.velocity.y = speed
+
+class Enemy(Entity):
+    def __init__(
+        self, pos: list[int], image: pg.Surface, speed: int, angle: int
+    ) -> None:
+        super().__init__(pos, image)
+        self.speed = speed
+        self.angle = angle
+        self.velocity = pg.Vector2(
+            math.cos(math.radians(self.angle)) * self.speed,
+            math.sin(math.radians(self.angle)) * self.speed,
+        )
+
+    def update(
+        self, screensize: list[int], target: pg.sprite.Sprite, act_dist: int
+    ) -> None:
+        super().update(screensize, self.speed)
+        if self.position.distance_to(target.position) > act_dist:
+            print("hi")
+            self.position += self.velocity
+            self.rect.center = self.position
 
     def draw(self, screen):
         super().draw(screen)
+
+    def collision(self, collide_rect: pg.Rect) -> bool:
+        return self.rect.colliderect(collide_rect)

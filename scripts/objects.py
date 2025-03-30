@@ -16,7 +16,7 @@ class Bullet(Sprite):
         self.image = pg.Surface(size)
         self.image.fill(colour)
 
-        self.rect = self.image.get_rect(center = pos)
+        self.rect = self.image.get_rect(center=pos)
 
         self.speed = speed
         self.position = pg.Vector2(pos)
@@ -41,12 +41,12 @@ class Obtainable_Item(Sprite):
     def __init__(self, image: pg.Surface, pos: tuple[float, float]):
         super().__init__()
         self.image = image
-        self.rect = self.image.get_rect(center=pos)
+        self.rect = self.image.get_rect(topleft=pos)
         self.position = pg.Vector2(pos)
 
     def collision(self, collide_object: pg.Rect):
         return self.rect.colliderect(collide_object)
-    
+
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(self.image, self.position)
 
@@ -65,11 +65,20 @@ class Gun(Sprite):
         self.rect.center = self.position.x, self.position.y
 
         if angle > 90 or angle < -90:
-            self.image = pg.transform.rotate(pg.transform.flip(self.base_image, False, True), -angle)
+            self.image = pg.transform.rotate(
+                pg.transform.flip(self.base_image, False, True), -angle
+            )
 
-        else: 
-            self.image = pg.transform.rotate(pg.transform.flip(self.base_image, False, False), -angle)
+        else:
+            self.image = pg.transform.rotate(
+                pg.transform.flip(self.base_image, False, False), -angle
+            )
 
     def draw(self, screen: pg.Surface) -> None:
-        screen.blit(self.image, (self.position.x - (self.image.get_width() // 2), self.position.y - (self.image.get_height() // 2)))
-
+        screen.blit(
+            self.image,
+            (
+                self.position.x - (self.image.get_width() // 2),
+                self.position.y - (self.image.get_height() // 2),
+            ),
+        )
