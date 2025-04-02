@@ -12,7 +12,7 @@ class Entity(pg.sprite.Sprite):
 
     def update(self, screensize: list[int], speed: int) -> None:
         self.position += self.velocity
-        self.rect.center = self.position
+        self.rect.center = self.position.xy
         self.rect.clamp_ip(pg.Rect((0, 0), screensize))
 
     def draw(self, screen: pg.Surface) -> None:
@@ -27,6 +27,7 @@ class Player(Entity):
     def update(self, screensize: list[int], speed: int) -> None:
         self.velocity = pg.Vector2(0, 0)
         keys = pg.key.get_pressed()
+
         if keys[pg.K_a]:
             self.velocity.x = -speed
         if keys[pg.K_d]:
@@ -35,6 +36,7 @@ class Player(Entity):
             self.velocity.y = -speed
         if keys[pg.K_s]:
             self.velocity.y = speed
+
         super().update(screensize, speed)
 
 
@@ -54,10 +56,13 @@ class Enemy(Entity):
         self, screensize: list[int], target: pg.sprite.Sprite, act_dist: int
     ) -> None:
         super().update(screensize, self.speed)
-        if self.position.distance_to(target.position) > act_dist:
-            print("hi")
+        dist = math.sqrt(((target.position.x - self.position.x) ** 2) + ((target.position.y - self.position.y) ** 2))
+        if dist > act_dist:
+            print(dist)
             self.position += self.velocity
             self.rect.center = self.position
+
+            self.rect.clamp_ip(pg.Rect((0, 0), screensize))
 
     def draw(self, screen):
         super().draw(screen)

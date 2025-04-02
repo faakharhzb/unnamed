@@ -23,10 +23,10 @@ class Main:
 
         self.images = {
             "player": pg.transform.scale_by(
-                load_image(BASE_IMAGE_PATH + "player.png", "white"), 1.3
+                load_image( "player.png", "white"), 1.3
             ),
-            "rifle": load_image(BASE_IMAGE_PATH + "guns/rifle.png", (255, 255, 255)),
-            "enemy": load_image(BASE_IMAGE_PATH + "enemy.png", "white"),
+            "rifle": load_image("guns/rifle.png", (255, 255, 255)),
+            "enemy": load_image("enemy.png", "white"),
         }
 
         self.mousepos = pg.mouse.get_pos()
@@ -36,9 +36,9 @@ class Main:
         )
         self.rifle = Gun(self.images["rifle"], self.player.rect.center)
         self.enemy = Enemy(
-            [random.randint(10, WIDTH), random.randint(10, HEIGHT)],
+            [random.randint(1, WIDTH), random.randint(1, HEIGHT)],
             self.images["enemy"],
-            500,
+            50,
             0,
         )
         self.all_sprites = pg.sprite.Group(self.player, self.rifle, self.enemy)
@@ -136,6 +136,8 @@ class Main:
             player_to_mouse_angle,
             (self.player.rect.centerx, self.player.rect.centery),
         )
+        
+        self.enemy.update(self.bg_size, self.player, 200)
 
     def run(self) -> None:
         while True:
@@ -151,7 +153,7 @@ class Main:
                 entity.draw(self.background)
 
             show_text(
-                f"{self.clock.get_fps() // 1} FPS",
+                f"{int(self.clock.get_fps() // 1)} FPS",
                 self.fps_font,
                 "white",
                 [5, 0],
