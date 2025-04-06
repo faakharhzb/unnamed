@@ -1,5 +1,4 @@
 import pygame as pg
-import math
 
 
 class Entity(pg.sprite.Sprite):
@@ -10,9 +9,9 @@ class Entity(pg.sprite.Sprite):
         self.position = pg.Vector2(pos)
         self.velocity = pg.Vector2(0, 0)
 
-    def update(self, screensize: list[int], speed: int) -> None:
+    def update(self, screensize: list[int]) -> None:
         self.position += self.velocity
-        self.rect.center = self.position.xy
+        self.rect.center = self.position.x, self.position.y
         self.rect.clamp_ip(pg.Rect((0, 0), screensize))
 
     def draw(self, screen: pg.Surface) -> None:
@@ -37,7 +36,7 @@ class Player(Entity):
         if keys[pg.K_s]:
             self.velocity.y = speed
 
-        super().update(screensize, speed)
+        super().update(screensize)
 
 
 class Enemy(Entity):
@@ -45,24 +44,31 @@ class Enemy(Entity):
         self, pos: list[int], image: pg.Surface, speed: int, angle: int
     ) -> None:
         super().__init__(pos, image)
+
         self.speed = speed
         self.angle = angle
         self.velocity = pg.Vector2(
-            math.cos(math.radians(self.angle)) * self.speed,
-            math.sin(math.radians(self.angle)) * self.speed,
+            self.angle * self.speed,
+            self.angle * self.speed,
         )
 
     def update(
-        self, screensize: list[int], target: pg.sprite.Sprite, act_dist: int
+        self, screensize: list[int], target: pg.sprite.Sprite, act_dist: int, angle: float
     ) -> None:
-        super().update(screensize, self.speed)
-        dist = math.sqrt(((target.position.x - self.position.x) ** 2) + ((target.position.y - self.position.y) ** 2))
-        if dist > act_dist:
-            print(dist)
-            self.position += self.velocity
-            self.rect.center = self.position
 
-            self.rect.clamp_ip(pg.Rect((0, 0), screensize))
+        self.angle = angle
+        dist = self.position.distance_to(target.position)
+        if dist < act_dist:
+            self.velocity = pg.Vector2(
+                self.angle * self.speed,
+                self.angle * self.speed,
+            )
+
+        else: 
+            self.velocity = pg.Vector2(0, 0)
+
+        super().update(screensize)
+        print(dist)
 
     def draw(self, screen):
         super().draw(screen)

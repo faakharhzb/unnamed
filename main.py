@@ -101,7 +101,6 @@ class Main:
                 self.player.position.x - self.enemy.position.x,
             )
         )
-        self.enemy.angle = enemy_to_player_angle
         
         if self.enemy.collision(self.player.rect):
             pg.quit()
@@ -137,7 +136,7 @@ class Main:
             (self.player.rect.centerx, self.player.rect.centery),
         )
         
-        self.enemy.update(self.bg_size, self.player, 200)
+        self.enemy.update(self.bg_size, self.player, 500, enemy_to_player_angle)
 
     def run(self) -> None:
         while True:
@@ -159,6 +158,8 @@ class Main:
                 [5, 0],
                 self.background,
             )
+
+            pg.draw.line(self.background, 'red', self.player.rect.center, self.enemy.rect.center, 4)
 
             self.screen.blit(self.background, (0, 0))
             pg.display.flip()
