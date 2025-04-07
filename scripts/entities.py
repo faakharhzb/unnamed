@@ -12,7 +12,6 @@ class Entity(pg.sprite.Sprite):
     def update(self, screensize: list[int]) -> None:
         self.position += self.velocity
         self.rect.center = self.position.x, self.position.y
-        self.rect.clamp_ip(pg.Rect((0, 0), screensize))
 
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(self.image, self.rect)
@@ -46,11 +45,9 @@ class Enemy(Entity):
         super().__init__(pos, image)
 
         self.speed = speed
-        self.angle = angle
         self.velocity = pg.Vector2(
-            self.angle * self.speed,
-            self.angle * self.speed,
-        )
+            self.speed, 0
+        ).rotate(angle)
 
     def update(
         self, screensize: list[int], target: pg.sprite.Sprite, act_dist: int, angle: float
@@ -60,9 +57,8 @@ class Enemy(Entity):
         dist = self.position.distance_to(target.position)
         if dist < act_dist:
             self.velocity = pg.Vector2(
-                self.angle * self.speed,
-                self.angle * self.speed,
-            )
+                self.speed, 0
+            ).rotate(angle)
 
         else: 
             self.velocity = pg.Vector2(0, 0)

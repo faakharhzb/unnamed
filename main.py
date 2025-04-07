@@ -136,7 +136,7 @@ class Main:
             (self.player.rect.centerx, self.player.rect.centery),
         )
         
-        self.enemy.update(self.bg_size, self.player, 500, enemy_to_player_angle)
+        self.enemy.update(self.bg_size, self.player, 50 * self.dt, enemy_to_player_angle)
 
     def run(self) -> None:
         while True:
