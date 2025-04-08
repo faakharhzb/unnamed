@@ -1,6 +1,7 @@
 import pygame as pg
 from pygame.sprite import Sprite
 import math
+from .utilities import cache_angles
 
 
 class Bullet(Sprite):
@@ -60,25 +61,31 @@ class Gun(Sprite):
         self.position = pg.Vector2(pos)
         self.rect = self.image.get_rect(center=pos)
 
+        self.cache = {}
+
     def update(self, angle: int, pos: list[int, int]) -> None:
+        self.cache = cache_angles(self.base_image)
+
+        self.angle = -angle
         self.position = pg.Vector2(pos)
         self.rect.center = self.position.x, self.position.y
 
         if angle > 90 or angle < -90:
             self.image = pg.transform.rotate(
-                pg.transform.flip(self.base_image, False, True), -angle
+                pg.transform.flip(self.cache[int(self.angle)], False, True), -self.angle
             )
 
         else:
             self.image = pg.transform.rotate(
-                pg.transform.flip(self.base_image, False, False), -angle
+                pg.transform.flip(self.cache[int(self.angle)], False, False), -self.angle
             )
 
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(
-            self.image,
+            self.cache[int(self.angle)],
             (
-                self.position.x - (self.image.get_width() // 2),
-                self.position.y - (self.image.get_height() // 2),
+                self.rect # - (self.image.get_width() // 2),
+                
+                # self.position.y  - (self.image.get_height() // 2),
             ),
         )

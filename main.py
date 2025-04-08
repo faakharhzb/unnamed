@@ -32,13 +32,13 @@ class Main:
         self.mousepos = pg.mouse.get_pos()
 
         self.player = Player(
-            [self.bg_size[0] / 2, self.bg_size[1] / 2], self.images["player"]
+            [self.bg_size[0] / 2, self.bg_size[1] / 2], self.images["player"], 500
         )
         self.rifle = Gun(self.images["rifle"], self.player.rect.center)
         self.enemy = Enemy(
             [random.randint(1, WIDTH), random.randint(1, HEIGHT)],
             self.images["enemy"],
-            50,
+            self.player.base_speed - 100,
             0,
         )
         self.all_sprites = pg.sprite.Group(self.player, self.rifle, self.enemy)
@@ -130,13 +130,13 @@ class Main:
         for bullet in self.bullets:
             bullet.update(self.background)
 
-        self.player.update(self.bg_size, 400 * self.dt)
+        self.player.update(self.dt)
         self.rifle.update(
             player_to_mouse_angle,
             (self.player.rect.centerx, self.player.rect.centery),
         )
         
-        self.enemy.update(self.bg_size, self.player, 50 * self.dt, enemy_to_player_angle)
+        self.enemy.update(self.player, 200, enemy_to_player_angle, self.dt)
 
     def run(self) -> None:
         while True:

@@ -21,3 +21,11 @@ def show_text(
 ) -> None:
     text_surface = font.render(text, True, color)
     screen.blit(text_surface, pos)
+
+
+def cache_angles(image: pg.Surface) -> dict:
+    dict_cache = {}
+    for angle in range(-180, 181):
+        dict_cache[int(angle)] = pg.transform.rotate(image, angle)
+
+    return dict_cache

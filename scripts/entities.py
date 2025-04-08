@@ -2,14 +2,16 @@ import pygame as pg
 
 
 class Entity(pg.sprite.Sprite):
-    def __init__(self, pos: list[int], image: pg.Surface) -> None:
+    def __init__(self, pos: list[int], image: pg.Surface, speed: int) -> None:
         super().__init__()
         self.image = image
         self.rect = self.image.get_rect(center=pos)
         self.position = pg.Vector2(pos)
         self.velocity = pg.Vector2(0, 0)
 
-    def update(self, screensize: list[int]) -> None:
+        self.base_speed = speed
+
+    def update(self) -> None:
         self.position += self.velocity
         self.rect.center = self.position.x, self.position.y
 
@@ -18,11 +20,12 @@ class Entity(pg.sprite.Sprite):
 
 
 class Player(Entity):
-    def __init__(self, pos: list[int], image: pg.Surface) -> None:
-        super().__init__(pos, image)
+    def __init__(self, pos: list[int], image: pg.Surface, base_speed: int) -> None:
+        super().__init__(pos, image, base_speed)
         self.ammo = 50
 
-    def update(self, screensize: list[int], speed: int) -> None:
+    def update(self, dt: float) -> None:
+        speed = self.base_speed * dt
         self.velocity = pg.Vector2(0, 0)
         keys = pg.key.get_pressed()
 
@@ -35,36 +38,39 @@ class Player(Entity):
         if keys[pg.K_s]:
             self.velocity.y = speed
 
-        super().update(screensize)
+        super().update()
+
+    def draw(self, screen: pg.Surface):
+        super().draw(screen)
 
 
 class Enemy(Entity):
     def __init__(
-        self, pos: list[int], image: pg.Surface, speed: int, angle: int
+        self, pos: list[int], image: pg.Surface, base_speed: int, angle: int, 
     ) -> None:
-        super().__init__(pos, image)
+        super().__init__(pos, image, base_speed)
 
-        self.speed = speed
+        self.base_speed = base_speed
         self.velocity = pg.Vector2(
-            self.speed, 0
+            self.base_speed, 0
         ).rotate(angle)
 
     def update(
-        self, screensize: list[int], target: pg.sprite.Sprite, act_dist: int, angle: float
+        self, target: pg.sprite.Sprite, act_dist: int, angle: float, dt: float
     ) -> None:
 
+        speed = self.base_speed * dt
         self.angle = angle
         dist = self.position.distance_to(target.position)
         if dist < act_dist:
             self.velocity = pg.Vector2(
-                self.speed, 0
+                speed, 0
             ).rotate(angle)
 
         else: 
             self.velocity = pg.Vector2(0, 0)
 
-        super().update(screensize)
-        print(dist)
+        super().update()
 
     def draw(self, screen):
         super().draw(screen)
