@@ -3,6 +3,7 @@ from pygame.locals import QUIT
 import sys
 import math
 import random
+import asyncio
 from scripts.settings import *
 from scripts.utilities import show_text, load_image
 from scripts.entities import Player, Enemy
@@ -129,6 +130,22 @@ class Main:
 
         for bullet in self.bullets:
             bullet.update(self.background)
+            if bullet.hit(self.enemy.rect):
+                self.enemy.kill()
+                self.enemy = Enemy(
+                    [random.randint(1, WIDTH), random.randint(1, HEIGHT)],
+                    self.images["enemy"],
+                    self.player.base_speed - 100,
+                    0,
+                )
+                bullet.kill()
+
+                self.enemy = Enemy(
+                    [random.randint(1, WIDTH), random.randint(1, HEIGHT)],
+                    self.images["enemy"],
+                    self.player.base_speed - 100,
+                    0,
+                )
 
         self.player.update(self.dt)
         self.rifle.update(
@@ -138,7 +155,7 @@ class Main:
         
         self.enemy.update(self.player, 200, enemy_to_player_angle, self.dt)
 
-    def run(self) -> None:
+    async def main(self) -> None:
         while True:
             for event in pg.event.get():
                 if event.type == QUIT:
@@ -146,6 +163,8 @@ class Main:
                     sys.exit()
 
             self.dt = self.clock.tick(FPS) / 1000
+            await asyncio.sleep(0)
+
             self.main_game()
 
             for entity in self.all_sprites:
@@ -159,11 +178,10 @@ class Main:
                 self.background,
             )
 
-            pg.draw.line(self.background, 'red', self.player.rect.center, self.enemy.rect.center, 4)
-
             self.screen.blit(self.background, (0, 0))
             pg.display.flip()
 
 
 if __name__ == "__main__":
-    Main().run()
+    main = Main()
+    asyncio.run(main.main())

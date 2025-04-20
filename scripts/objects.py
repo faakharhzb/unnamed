@@ -34,6 +34,9 @@ class Bullet(Sprite):
         if not screen.get_rect().contains(self.rect):
             self.kill()
 
+    def hit(self, collide_rect: pg.Rect) -> None:
+        return self.rect.colliderect(collide_rect)
+
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(self.image, self.position)
 
@@ -83,9 +86,6 @@ class Gun(Sprite):
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(
             self.cache[int(self.angle)],
-            (
-                self.rect # - (self.image.get_width() // 2),
-                
-                # self.position.y  - (self.image.get_height() // 2),
-            ),
+            self.cache[int(self.angle)].get_rect(center=self.rect.center),
         )
+
