@@ -3,11 +3,15 @@ from pygame.locals import QUIT
 import sys
 import math
 import random
-import asyncio
 from scripts.settings import *
 from scripts.utilities import show_text, load_image
 from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
+
+if sys.platform == 'wasm':
+    import asyncio
+else:
+    asyncio = None
 
 
 class Main:
