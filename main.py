@@ -53,6 +53,8 @@ class Main:
         self.dt = 0.017
         self.bullet_cooldown = pg.time.get_ticks()
         self.ammo_delay = pg.time.get_ticks()
+        
+        self.running = True
 
     def shoot(self) -> None:
         self.mousepos = pg.mouse.get_pos()
@@ -106,10 +108,9 @@ class Main:
                 self.player.position.x - self.enemy.position.x,
             )
         )
-        
+
         if self.enemy.collision(self.player.rect):
-            pg.quit()
-            sys.exit()
+            self.running = False
 
         if pg.time.get_ticks() - self.ammo_delay >= 5000:
             self.spawn_ammo()
@@ -156,15 +157,15 @@ class Main:
             player_to_mouse_angle,
             (self.player.rect.centerx, self.player.rect.centery),
         )
-        
+
         self.enemy.update(self.player, 200, enemy_to_player_angle, self.dt)
 
     async def main(self) -> None:
-        while True:
+        self.running = True
+        while self.running:
             for event in pg.event.get():
                 if event.type == QUIT:
-                    pg.quit()
-                    sys.exit()
+                    self.running = False
 
             self.dt = self.clock.tick(FPS) / 1000
             await asyncio.sleep(0)
@@ -189,3 +190,6 @@ class Main:
 if __name__ == "__main__":
     main = Main()
     asyncio.run(main.main())
+    pg.quit()
+    sys.exit()
+
