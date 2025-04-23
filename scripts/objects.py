@@ -10,7 +10,7 @@ class Bullet(Sprite):
         size: tuple[int, int],
         pos: tuple[float, float],
         angle: float,
-        speed: float,
+        base_speed: float,
         colour: pg.Color,
     ):
         super().__init__()
@@ -19,15 +19,19 @@ class Bullet(Sprite):
 
         self.rect = self.image.get_rect(center=pos)
 
-        self.speed = speed
+        self.base_speed = base_speed
         self.position = pg.Vector2(pos)
         self.angle = angle
         self.velocity = pg.Vector2(
-            math.cos(math.radians(self.angle)) * speed,
-            math.sin(math.radians(self.angle)) * speed,
+            math.cos(math.radians(self.angle)) * base_speed,
+            math.sin(math.radians(self.angle)) * base_speed,
         )
 
-    def update(self, screen: pg.Surface):
+    def update(self, screen: pg.Surface, dt: float):
+        self.velocity = pg.Vector2(
+            math.cos(math.radians(self.angle)) * (self.base_speed * dt),
+            math.sin(math.radians(self.angle)) * (self.base_speed * dt),
+        )
         self.position += self.velocity
         self.rect.centerx, self.rect.centery = self.position.x, self.position.y
 
@@ -74,18 +78,16 @@ class Gun(Sprite):
         self.rect.center = self.position.x, self.position.y
 
         if angle > 90 or angle < -90:
-            self.image = pg.transform.rotate(
-                pg.transform.flip(self.cache[int(self.angle)], False, True), -self.angle
-            )
+                self.image = pg.transform.flip(self.cache[int(self.angle)], False, True), -self.angle
 
         else:
-            self.image = pg.transform.rotate(
-                pg.transform.flip(self.cache[int(self.angle)], False, False), -self.angle
-            )
+                self.image = pg.transform.flip(self.cache[int(self.angle)], False, False), -self.angle
+
+        self.rect = self.cache[int(self.angle)].get_rect(center=self.rect.center)
 
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(
             self.cache[int(self.angle)],
-            self.cache[int(self.angle)].get_rect(center=self.rect.center),
+            self.rect,
         )
 

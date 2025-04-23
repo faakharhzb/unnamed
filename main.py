@@ -7,11 +7,10 @@ from scripts.settings import *
 from scripts.utilities import show_text, load_image
 from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
+import asyncio
 
-if sys.platform == 'wasm':
-    import asyncio
-else:
-    asyncio = None
+if sys.platform in ('emscripten', 'wasi'):
+    import platform
 
 
 class Main:
@@ -69,7 +68,7 @@ class Main:
                 [12, 12],
                 self.player.position.xy,
                 player_to_mouse_angle,
-                700 * self.dt,
+                700,
                 "black",
             )
             self.player.ammo -= 1
@@ -134,23 +133,18 @@ class Main:
             self.shoot()
 
         for bullet in self.bullets:
-            bullet.update(self.background)
+            bullet.update(self.background, self.dt)
             if bullet.hit(self.enemy.rect):
                 self.enemy.kill()
-                self.enemy = Enemy(
-                    [random.randint(1, WIDTH), random.randint(1, HEIGHT)],
-                    self.images["enemy"],
-                    self.player.base_speed - 100,
-                    0,
-                )
-                bullet.kill()
 
                 self.enemy = Enemy(
                     [random.randint(1, WIDTH), random.randint(1, HEIGHT)],
                     self.images["enemy"],
-                    self.player.base_speed - 100,
+                    self.player.base_speed - 30,
                     0,
                 )
+                self.enemy.add(self.all_sprites)
+
 
         self.player.update(self.dt)
         self.rifle.update(
@@ -158,7 +152,7 @@ class Main:
             (self.player.rect.centerx, self.player.rect.centery),
         )
 
-        self.enemy.update(self.player, 200, enemy_to_player_angle, self.dt)
+        self.enemy.update(self.player, 30, enemy_to_player_angle, self.dt)
 
     async def main(self) -> None:
         self.running = True
@@ -186,10 +180,15 @@ class Main:
             self.screen.blit(self.background, (0, 0))
             pg.display.flip()
 
+        if sys.platform in ('emscripten', 'wasi'):
+            pg.quit()
+            platform.window.location.reload()
+
+        else:
+            pg.quit()
+            sys.exit()
+
 
 if __name__ == "__main__":
     main = Main()
     asyncio.run(main.main())
-    pg.quit()
-    sys.exit()
-
