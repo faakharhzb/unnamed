@@ -9,7 +9,7 @@ from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
 import asyncio
 
-if sys.platform in ('emscripten', 'wasi'):
+if sys.platform in ("emscripten", "wasi"):
     import platform
 
 
@@ -26,9 +26,7 @@ class Main:
         self.clock = pg.time.Clock()
 
         self.images = {
-            "player": pg.transform.scale_by(
-                load_image( "player.png", "white"), 1.3
-            ),
+            "player": pg.transform.scale_by(load_image("player.png", "white"), 1.3),
             "rifle": load_image("guns/rifle.png", (255, 255, 255)),
             "enemy": load_image("enemy.png", "white"),
         }
@@ -52,7 +50,7 @@ class Main:
         self.dt = 0.017
         self.bullet_cooldown = pg.time.get_ticks()
         self.ammo_delay = pg.time.get_ticks()
-        
+
         self.running = True
 
     def shoot(self) -> None:
@@ -145,14 +143,13 @@ class Main:
                 )
                 self.enemy.add(self.all_sprites)
 
-
         self.player.update(self.dt)
         self.rifle.update(
             player_to_mouse_angle,
             (self.player.rect.centerx, self.player.rect.centery),
         )
 
-        self.enemy.update(self.player, 30, enemy_to_player_angle, self.dt)
+        self.enemy.update(self.player, 300, enemy_to_player_angle, self.dt)
 
     async def main(self) -> None:
         self.running = True
@@ -180,7 +177,7 @@ class Main:
             self.screen.blit(self.background, (0, 0))
             pg.display.flip()
 
-        if sys.platform in ('emscripten', 'wasi'):
+        if sys.platform in ("emscripten", "wasi"):
             pg.quit()
             platform.window.location.reload()
 

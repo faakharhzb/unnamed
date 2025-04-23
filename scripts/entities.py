@@ -46,28 +46,27 @@ class Player(Entity):
 
 class Enemy(Entity):
     def __init__(
-        self, pos: list[int], image: pg.Surface, base_speed: int, angle: int, 
+        self,
+        pos: list[int],
+        image: pg.Surface,
+        base_speed: int,
+        angle: int,
     ) -> None:
         super().__init__(pos, image, base_speed)
 
         self.base_speed = base_speed
-        self.velocity = pg.Vector2(
-            self.base_speed, 0
-        ).rotate(angle)
+        self.velocity = pg.Vector2(self.base_speed, 0).rotate(angle)
 
     def update(
         self, target: pg.sprite.Sprite, act_dist: int, angle: float, dt: float
     ) -> None:
-
         speed = self.base_speed * dt
         self.angle = angle
         dist = self.position.distance_to(target.position)
         if dist < act_dist:
-            self.velocity = pg.Vector2(
-                speed, 0
-            ).rotate(angle)
+            self.velocity = pg.Vector2(speed, 0).rotate(angle)
 
-        else: 
+        else:
             self.velocity = pg.Vector2(0, 0)
 
         super().update()

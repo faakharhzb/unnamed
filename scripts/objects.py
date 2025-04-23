@@ -78,10 +78,16 @@ class Gun(Sprite):
         self.rect.center = self.position.x, self.position.y
 
         if angle > 90 or angle < -90:
-                self.image = pg.transform.flip(self.cache[int(self.angle)], False, True), -self.angle
+            self.image = (
+                pg.transform.flip(self.cache[int(self.angle)], False, True),
+                -self.angle,
+            )
 
         else:
-                self.image = pg.transform.flip(self.cache[int(self.angle)], False, False), -self.angle
+            self.image = (
+                pg.transform.flip(self.cache[int(self.angle)], False, False),
+                -self.angle,
+            )
 
         self.rect = self.cache[int(self.angle)].get_rect(center=self.rect.center)
 
@@ -90,4 +96,3 @@ class Gun(Sprite):
             self.cache[int(self.angle)],
             self.rect,
         )
-
