@@ -9,37 +9,36 @@ from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
 import asyncio
 
-if sys.platform in ("emscripten", "wasi"):
-    import platform
-
 
 class Main:
     def __init__(self) -> None:
         pg.init()
-        pg.display.set_caption("Unnamed Game")
+        pg.display.set_caption('Unnamed Game')
         self.screen = pg.display.set_mode(SIZE, SCREEN_FLAGS)
 
         self.background = pg.Surface(SIZE)
         self.bg_size = self.background.get_size()
 
-        self.fps_font = pg.font.SysFont("arial", 20)
+        self.fps_font = pg.font.SysFont('arial', 20)
         self.clock = pg.time.Clock()
 
         self.images = {
-            "player": pg.transform.scale_by(load_image("player.png", "white"), 1.3),
-            "rifle": load_image("guns/rifle.png", (255, 255, 255)),
-            "enemy": load_image("enemy.png", "white"),
+            'player': load_image('player.png', 'white', scale=3),
+            'rifle': load_image('guns/rifle.png', (255, 255, 255), scale=1.5),
+            'enemy': load_image('enemy.png', 'white'),
         }
 
         self.mousepos = pg.mouse.get_pos()
 
         self.player = Player(
-            [self.bg_size[0] / 2, self.bg_size[1] / 2], self.images["player"], 500
+            [self.bg_size[0] // 2, self.bg_size[1] // 2],
+            self.images['player'],
+            500,
         )
-        self.rifle = Gun(self.images["rifle"], self.player.rect.center)
+        self.rifle = Gun(self.images['rifle'], self.player.rect.center)
         self.enemy = Enemy(
             [random.randint(1, WIDTH), random.randint(1, HEIGHT)],
-            self.images["enemy"],
+            self.images['enemy'],
             self.player.base_speed - 100,
             0,
         )
@@ -66,8 +65,8 @@ class Main:
                 [12, 12],
                 self.player.position.xy,
                 player_to_mouse_angle,
-                700,
-                "black",
+                840,
+                'black',
             )
             self.player.ammo -= 1
             self.bullets.add(bullet)
@@ -77,7 +76,7 @@ class Main:
     def spawn_ammo(self) -> None:
         if len(self.ammos) < 4:
             ammo_surface = pg.Surface((60, 60))
-            ammo_surface.fill("red")
+            ammo_surface.fill('red')
             ammo = Obtainable_Item(
                 ammo_surface,
                 (
@@ -109,7 +108,7 @@ class Main:
         if self.enemy.collision(self.player.rect):
             self.running = False
 
-        if pg.time.get_ticks() - self.ammo_delay >= 5000:
+        if pg.time.get_ticks() - self.ammo_delay >= 6500:
             self.spawn_ammo()
             self.ammo_delay = pg.time.get_ticks()
 
@@ -117,12 +116,12 @@ class Main:
             if ammo.collision(self.player.rect):
                 self.all_sprites.remove(ammo)
                 self.ammos.remove(ammo)
-                self.player.ammo += 20
+                self.player.ammo += 15
 
         show_text(
-            f"Ammo: {self.player.ammo}",
+            f'Ammo: {self.player.ammo}',
             self.fps_font,
-            "white",
+            'white',
             [5, 50],
             self.background,
         )
@@ -136,9 +135,12 @@ class Main:
                 self.enemy.kill()
 
                 self.enemy = Enemy(
-                    [random.randint(1, WIDTH), random.randint(1, HEIGHT)],
-                    self.images["enemy"],
-                    self.player.base_speed - 30,
+                    [
+                        random.randint(1, WIDTH),
+                        random.randint(1, HEIGHT),
+                    ],
+                    self.images['enemy'],
+                    self.player.base_speed - 44,
                     0,
                 )
                 self.enemy.add(self.all_sprites)
@@ -149,7 +151,7 @@ class Main:
             (self.player.rect.centerx, self.player.rect.centery),
         )
 
-        self.enemy.update(self.player, 300, enemy_to_player_angle, self.dt)
+        self.enemy.update(self.player, 240, enemy_to_player_angle, self.dt)
 
     async def main(self) -> None:
         self.running = True
@@ -167,9 +169,9 @@ class Main:
                 entity.draw(self.background)
 
             show_text(
-                f"{int(self.clock.get_fps() // 1)} FPS",
+                f'{int(self.clock.get_fps() // 1)} FPS',
                 self.fps_font,
-                "white",
+                'white',
                 [5, 0],
                 self.background,
             )
@@ -177,15 +179,10 @@ class Main:
             self.screen.blit(self.background, (0, 0))
             pg.display.flip()
 
-        if sys.platform in ("emscripten", "wasi"):
-            pg.quit()
-            platform.window.location.reload()
-
-        else:
-            pg.quit()
-            sys.exit()
+        pg.quit()
+        sys.exit()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main = Main()
     asyncio.run(main.main())

@@ -1,8 +1,8 @@
-from pygame.locals import DOUBLEBUF
+from pygame.locals import DOUBLEBUF, SCALED
 
 SIZE = WIDTH, HEIGHT = [800, 600]
-SCREEN_FLAGS = DOUBLEBUF
+SCREEN_FLAGS = DOUBLEBUF | SCALED
 
-FPS = 0
+FPS = 60
 
-BASE_IMAGE_PATH = "assets/images/"
+BASE_IMAGE_PATH = 'assets/images/'
