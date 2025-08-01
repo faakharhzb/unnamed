@@ -1,46 +1,56 @@
+import numpy as np
 import pygame as pg
 from pygame.locals import QUIT
+
 import sys
 import math
 import random
+import asyncio
+
 from scripts.settings import *
 from scripts.utilities import show_text, load_image
 from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
-import asyncio
 
 
 class Main:
-    def __init__(self) -> None:
+    def __init__(self, matrix: np.ndarray | list) -> None:
         pg.init()
-        pg.display.set_caption('Unnamed Game')
+        pg.display.set_caption("Unnamed Game")
         self.screen = pg.display.set_mode(SIZE, SCREEN_FLAGS)
 
-        self.background = pg.Surface(SIZE)
+        self.images = {
+            "player": load_image("player.png", "white", scale=3),
+            "enemy": load_image("enemy.png", "white"),
+            "rifle": load_image("guns/rifle.png", "white", scale=1.5),
+            "background": load_image("background.png", "white"),
+        }
+
+        self.background = pg.transform.scale_by(
+            self.images["background"],
+            min(
+                WIDTH / self.images["background"].get_width(),
+                HEIGHT / self.images["background"].get_height(),
+            ),
+        )
         self.bg_size = self.background.get_size()
 
-        self.fps_font = pg.font.SysFont('arial', 20)
+        self.fps_font = pg.font.SysFont("arial", 20)
         self.clock = pg.time.Clock()
-
-        self.images = {
-            'player': load_image('player.png', 'white', scale=3),
-            'rifle': load_image('guns/rifle.png', (255, 255, 255), scale=1.5),
-            'enemy': load_image('enemy.png', 'white'),
-        }
 
         self.mousepos = pg.mouse.get_pos()
 
         self.player = Player(
             [self.bg_size[0] // 2, self.bg_size[1] // 2],
-            self.images['player'],
+            self.images["player"],
             500,
         )
-        self.rifle = Gun(self.images['rifle'], self.player.rect.center)
+        self.rifle = Gun(self.images["rifle"], self.player.rect.center)
         self.enemy = Enemy(
             [random.randint(1, WIDTH), random.randint(1, HEIGHT)],
-            self.images['enemy'],
+            self.images["enemy"],
             self.player.base_speed - 100,
-            0,
+            matrix,
         )
         self.all_sprites = pg.sprite.Group(self.player, self.rifle, self.enemy)
         self.bullets = pg.sprite.Group()
@@ -51,6 +61,8 @@ class Main:
         self.ammo_delay = pg.time.get_ticks()
 
         self.running = True
+
+        self.matrix = matrix
 
     def shoot(self) -> None:
         self.mousepos = pg.mouse.get_pos()
@@ -65,8 +77,8 @@ class Main:
                 [12, 12],
                 self.player.position.xy,
                 player_to_mouse_angle,
-                840,
-                'black',
+                900,
+                "black",
             )
             self.player.ammo -= 1
             self.bullets.add(bullet)
@@ -76,7 +88,7 @@ class Main:
     def spawn_ammo(self) -> None:
         if len(self.ammos) < 4:
             ammo_surface = pg.Surface((60, 60))
-            ammo_surface.fill('red')
+            ammo_surface.fill("red")
             ammo = Obtainable_Item(
                 ammo_surface,
                 (
@@ -88,20 +100,12 @@ class Main:
             self.ammos.add(ammo)
 
     def main_game(self) -> None:
-        self.background.fill((3, 200, 200))
-
         self.mousepos = pg.mouse.get_pos()
 
         player_to_mouse_angle = math.degrees(
             math.atan2(
                 self.mousepos[1] - self.player.position.y,
                 self.mousepos[0] - self.player.position.x,
-            )
-        )
-        enemy_to_player_angle = math.degrees(
-            math.atan2(
-                self.player.position.y - self.enemy.position.y,
-                self.player.position.x - self.enemy.position.x,
             )
         )
 
@@ -119,11 +123,11 @@ class Main:
                 self.player.ammo += 15
 
         show_text(
-            f'Ammo: {self.player.ammo}',
+            f"Ammo: {self.player.ammo}",
             self.fps_font,
-            'white',
+            "white",
             [5, 50],
-            self.background,
+            self.screen,
         )
 
         if pg.mouse.get_pressed() == (1, 0, 0) and self.player.ammo != 0:
@@ -136,12 +140,12 @@ class Main:
 
                 self.enemy = Enemy(
                     [
-                        random.randint(1, WIDTH),
-                        random.randint(1, HEIGHT),
+                        random.randint(10, WIDTH),
+                        random.randint(10, HEIGHT),
                     ],
-                    self.images['enemy'],
+                    self.images["enemy"],
                     self.player.base_speed - 44,
-                    0,
+                    self.matrix,
                 )
                 self.enemy.add(self.all_sprites)
 
@@ -151,7 +155,7 @@ class Main:
             (self.player.rect.centerx, self.player.rect.centery),
         )
 
-        self.enemy.update(self.player, 240, enemy_to_player_angle, self.dt)
+        self.enemy.update(self.player, 240, self.dt)
 
     async def main(self) -> None:
         self.running = True
@@ -165,24 +169,37 @@ class Main:
 
             self.main_game()
 
+            self.screen.blit(self.background, (0, 0))
+
             for entity in self.all_sprites:
-                entity.draw(self.background)
+                entity.draw(self.screen)
 
             show_text(
-                f'{int(self.clock.get_fps() // 1)} FPS',
+                f"{int(self.clock.get_fps() // 1)} FPS",
                 self.fps_font,
-                'white',
+                "white",
                 [5, 0],
-                self.background,
+                self.screen,
             )
 
-            self.screen.blit(self.background, (0, 0))
+            for node in self.enemy.path:
+                pg.draw.circle(
+                    self.screen,
+                    "black",
+                    (
+                        node.x * len(self.matrix[0]),
+                        node.y * len(self.matrix[1]),
+                    ),
+                    10,
+                )
+
             pg.display.flip()
 
         pg.quit()
         sys.exit()
 
 
-if __name__ == '__main__':
-    main = Main()
+if __name__ == "__main__":
+    matrix = np.ones((50, 50), dtype=int)
+    main = Main(matrix)
     asyncio.run(main.main())

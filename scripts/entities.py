@@ -1,5 +1,9 @@
+import math
+from numpy import ndarray
 import pygame as pg
-from scripts.settings import WIDTH
+from pathfinding.core.grid import Grid, GridNode
+from pathfinding.core.diagonal_movement import DiagonalMovement
+from pathfinding.finder.a_star import AStarFinder
 
 
 class Entity(pg.sprite.Sprite):
@@ -26,9 +30,7 @@ class Entity(pg.sprite.Sprite):
 
 
 class Player(Entity):
-    def __init__(
-        self, pos: list[int], image: pg.Surface, base_speed: int
-    ) -> None:
+    def __init__(self, pos: list[int], image: pg.Surface, base_speed: int) -> None:
         super().__init__(pos, image, base_speed)
         self.ammo = 30
 
@@ -57,28 +59,62 @@ class Enemy(Entity):
         pos: list[int],
         image: pg.Surface,
         base_speed: int,
-        angle: int,
+        matrix: list | ndarray,
     ) -> None:
         super().__init__(pos, image, base_speed)
 
         self.base_speed = base_speed
-        self.velocity = pg.Vector2(self.base_speed, 0).rotate(angle)
+        self.velocity = pg.Vector2(self.base_speed, 0)
+        self.matrix = matrix
 
-    def update(
-        self, target: pg.sprite.Sprite, act_dist: int, angle: float, dt: float
-    ) -> None:
+        self.grid = Grid(matrix=self.matrix)
+        self.finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
+
+        self.arrived = []
+
+    def find_path(self, target_pos: pg.Vector2) -> list[GridNode]:
+        self.start = self.grid.node(
+            int(self.position.x // len(self.matrix[0])),
+            int(self.position.y // len(self.matrix[1])),
+        )
+
+        self.end = self.grid.node(
+            int(target_pos.x // len(self.matrix[0])),
+            int(target_pos.y // len(self.matrix[1])),
+        )
+
+        path, _ = self.finder.find_path(self.start, self.end, self.grid)
+        return path
+
+    def get_angle(self, target_pos: pg.Vector2) -> int:
+        angle = math.degrees(
+            math.atan2(
+                self.target_pos.y - self.position.y, self.target_pos.x - self.position.x
+            )
+        )
+        return angle
+
+    def update(self, target: pg.sprite.Sprite, act_dist: int, dt: float) -> None:
         super().update(dt)
 
-        self.angle = angle
-        dist = self.position.distance_to(target.position)
-        if dist < act_dist:
-            self.velocity = pg.Vector2(self.speed, 0).rotate(angle)
+        self.path = self.find_path(target.position)
 
-        else:
-            self.velocity = pg.Vector2(0, 0)
+        for point in self.path:
+            if point not in self.arrived:
+                self.target_pos = pg.Vector2(
+                    point.x * len(self.matrix[0]), point.y * len(self.matrix[1])
+                )
+                self.angle = self.get_angle(self.target_pos)
+
+                if len(self.path) - len(self.arrived) < 15:
+                    self.velocity = pg.Vector2(self.speed).rotate(self.angle)
+                else:
+                    self.velocity = pg.Vector2(0, 0)
+            else:
+                self.arrived.append(point)
 
     def draw(self, screen):
         super().draw(screen)
 
     def collision(self, collide_rect: pg.Rect) -> bool:
-        return self.rect.colliderect(collide_rect)
+        return self.rect.center == collide_rect.center
