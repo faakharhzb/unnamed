@@ -33,21 +33,30 @@ class Player(Entity):
     def __init__(self, pos: list[int], image: pg.Surface, base_speed: int) -> None:
         super().__init__(pos, image, base_speed)
         self.ammo = 30
+        self.moved = False
 
     def update(self, dt: float) -> None:
         super().update(dt)
+
+        up, down, left, right = False, False, False, False
 
         self.velocity = pg.Vector2(0, 0)
         keys = pg.key.get_pressed()
 
         if keys[pg.K_a]:
             self.velocity.x = -self.speed
+            left = True
         if keys[pg.K_d]:
             self.velocity.x = self.speed
+            right = True
         if keys[pg.K_w]:
             self.velocity.y = -self.speed
+            up = True
         if keys[pg.K_s]:
             self.velocity.y = self.speed
+            down = True
+
+        self.moved = up or down or left or right
 
     def draw(self, screen: pg.Surface):
         super().draw(screen)
@@ -70,7 +79,8 @@ class Enemy(Entity):
         self.grid = Grid(matrix=self.matrix)
         self.finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
 
-        self.arrived = []
+        self.arrived = set()
+        self.path = self.find_path(pg.Vector2())
 
     def find_path(self, target_pos: pg.Vector2) -> list[GridNode]:
         self.start = self.grid.node(
@@ -89,7 +99,8 @@ class Enemy(Entity):
     def get_angle(self, target_pos: pg.Vector2) -> int:
         angle = math.degrees(
             math.atan2(
-                self.target_pos.y - self.position.y, self.target_pos.x - self.position.x
+                self.target_pos.y - self.position.y,
+                self.target_pos.x - self.position.x,
             )
         )
         return angle
@@ -97,12 +108,11 @@ class Enemy(Entity):
     def update(self, target: pg.sprite.Sprite, act_dist: int, dt: float) -> None:
         super().update(dt)
 
-        self.path = self.find_path(target.position)
-
         for point in self.path:
-            if point not in self.arrived:
+            if point not in list(self.arrived):
                 self.target_pos = pg.Vector2(
-                    point.x * len(self.matrix[0]), point.y * len(self.matrix[1])
+                    point.x * len(self.matrix[0]),
+                    point.y * len(self.matrix[1]),
                 )
                 self.angle = self.get_angle(self.target_pos)
 
@@ -111,7 +121,7 @@ class Enemy(Entity):
                 else:
                     self.velocity = pg.Vector2(0, 0)
             else:
-                self.arrived.append(point)
+                self.arrived.add(point)
 
     def draw(self, screen):
         super().draw(screen)

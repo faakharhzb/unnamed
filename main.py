@@ -11,6 +11,7 @@ from scripts.settings import *
 from scripts.utilities import show_text, load_image
 from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
+from scripts.camera import Camera
 
 
 class Main:
@@ -52,6 +53,7 @@ class Main:
             self.player.base_speed - 100,
             matrix,
         )
+        self.camera = Camera(self.player, pg.Vector2())
         self.all_sprites = pg.sprite.Group(self.player, self.rifle, self.enemy)
         self.bullets = pg.sprite.Group()
         self.ammos = pg.sprite.Group()
@@ -155,6 +157,9 @@ class Main:
             (self.player.rect.centerx, self.player.rect.centery),
         )
 
+        if self.player.moved:
+            self.enemy.path = self.enemy.find_path(self.player.position)
+
         self.enemy.update(self.player, 240, self.dt)
 
     async def main(self) -> None:
@@ -167,9 +172,13 @@ class Main:
             self.dt = self.clock.tick(FPS) / 1000
             await asyncio.sleep(0)
 
+            self.all_sprites, self.bg_pos = self.camera.apply_offset(
+                self.all_sprites
+            )
+
             self.main_game()
 
-            self.screen.blit(self.background, (0, 0))
+            self.screen.blit(self.background, self.bg_pos)
 
             for entity in self.all_sprites:
                 entity.draw(self.screen)
@@ -182,16 +191,17 @@ class Main:
                 self.screen,
             )
 
-            for node in self.enemy.path:
-                pg.draw.circle(
-                    self.screen,
-                    "black",
-                    (
-                        node.x * len(self.matrix[0]),
-                        node.y * len(self.matrix[1]),
-                    ),
-                    10,
-                )
+            if hasattr(self.enemy, "path"):
+                for node in self.enemy.path:
+                    pg.draw.circle(
+                        self.screen,
+                        "black",
+                        (
+                            node.x * len(self.matrix[0]),
+                            node.y * len(self.matrix[1]),
+                        ),
+                        10,
+                    )
 
             pg.display.flip()
 
