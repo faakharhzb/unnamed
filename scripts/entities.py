@@ -11,19 +11,27 @@ class Entity(pg.sprite.Sprite):
         super().__init__()
         self.image = image
         self.rect = self.image.get_rect(center=pos)
-        self.position = pg.Vector2(pos)
-        self.velocity = pg.Vector2(0, 0)
+        self.velocity = [0, 0]
 
         self.base_speed = speed
+
+    def clamp(self, w: int, h: int) -> None:
+        if self.rect.top < 0:
+            self.rect.top = 0
+        if self.rect.bottom > h:
+            self.rect.bottom = h
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.right > w:
+            self.rect.right = w
 
     def update(self, dt: float) -> None:
         self.speed = self.base_speed * dt
 
-        if self.velocity.length() != 0:
-            self.velocity = self.velocity.normalize() * self.speed
+        self.velocity = [i * self.speed for i in self.velocity]
 
-        self.position += self.velocity
-        self.rect.center = self.position.xy
+        self.rect.centerx = self.velocity[0]
+        self.rect.centery = self.velocity[1]
 
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(self.image, self.rect)
@@ -35,28 +43,34 @@ class Player(Entity):
         self.ammo = 30
         self.moved = False
 
-    def update(self, dt: float) -> None:
+    def clamp(self, w: int, h: int) -> None:
+        super().clamp(w, h)
+
+    def update(self, dt: float, w: int, h: int) -> None:
         super().update(dt)
 
         up, down, left, right = False, False, False, False
 
-        self.velocity = pg.Vector2(0, 0)
         keys = pg.key.get_pressed()
 
         if keys[pg.K_a]:
-            self.velocity.x = -self.speed
+            self.velocity[0] = -self.speed
             left = True
         if keys[pg.K_d]:
-            self.velocity.x = self.speed
+            self.velocity[0] = self.speed
             right = True
         if keys[pg.K_w]:
-            self.velocity.y = -self.speed
+            self.velocity[1] = -self.speed
             up = True
         if keys[pg.K_s]:
-            self.velocity.y = self.speed
+            self.velocity[1] = self.speed
             down = True
 
+        self.clamp(w, h)
+
         self.moved = up or down or left or right
+
+        self.velocity = [0, 0]
 
     def draw(self, screen: pg.Surface):
         super().draw(screen)
@@ -69,28 +83,40 @@ class Enemy(Entity):
         image: pg.Surface,
         base_speed: int,
         matrix: list | ndarray,
+        rows: int,
+        cols: int,
     ) -> None:
         super().__init__(pos, image, base_speed)
 
+        self.rows = rows
+        self.cols = cols
+
         self.base_speed = base_speed
-        self.velocity = pg.Vector2(self.base_speed, 0)
+        self.velocity = [self.base_speed, 0]
         self.matrix = matrix
 
         self.grid = Grid(matrix=self.matrix)
         self.finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
 
-        self.arrived = set()
-        self.path = self.find_path(pg.Vector2())
+        self.path = []
+        self.player_moved = False
+        self.arrived = 0
 
-    def find_path(self, target_pos: pg.Vector2) -> list[GridNode]:
+    def find_path(self, target_pos: list) -> list[GridNode]:
+        self.arrived = 0
+        print(
+            int(self.rect.centerx // 40),
+            int(self.rect.centery // 40),
+        )
+
         self.start = self.grid.node(
-            int(self.position.x // len(self.matrix[0])),
-            int(self.position.y // len(self.matrix[1])),
+            int(self.rect.centerx // 40),
+            int(self.rect.centery // 40),
         )
 
         self.end = self.grid.node(
-            int(target_pos.x // len(self.matrix[0])),
-            int(target_pos.y // len(self.matrix[1])),
+            int(target_pos[0] // 40),
+            int(target_pos[1] // 40),
         )
 
         path, _ = self.finder.find_path(self.start, self.end, self.grid)
@@ -99,32 +125,48 @@ class Enemy(Entity):
     def get_angle(self, target_pos: pg.Vector2) -> int:
         angle = math.degrees(
             math.atan2(
-                self.target_pos.y - self.position.y,
-                self.target_pos.x - self.position.x,
+                self.target_pos[1] - self.rect.centery,
+                self.target_pos[0] - self.rect.centerx,
             )
         )
-        return angle
+        return int(angle)
 
-    def update(self, target: pg.sprite.Sprite, act_dist: int, dt: float) -> None:
-        super().update(dt)
+    def clamp(self, w: int, h: int) -> None:
+        super().clamp(w, h)
 
-        for point in self.path:
-            if point not in list(self.arrived):
-                self.target_pos = pg.Vector2(
-                    point.x * len(self.matrix[0]),
-                    point.y * len(self.matrix[1]),
-                )
-                self.angle = self.get_angle(self.target_pos)
+    def update(
+        self, target: pg.sprite.Sprite, act_dist: int, dt: float, w: int, h: int
+    ) -> None:
+        self.speed = self.base_speed * dt
 
-                if len(self.path) - len(self.arrived) < 15:
-                    self.velocity = pg.Vector2(self.speed).rotate(self.angle)
-                else:
-                    self.velocity = pg.Vector2(0, 0)
-            else:
-                self.arrived.add(point)
+        if not self.path or self.player_moved:
+            self.path = self.find_path(target.rect.center)
+
+        if self.path:
+            point = self.path[0]
+            tile_size = 40
+            self.target_pos = [
+                point.x * tile_size + tile_size // 2,
+                point.y * tile_size + tile_size // 2,
+            ]
+
+            angle = self.get_angle(self.target_pos)
+            rad = math.radians(angle)
+            self.velocity = [math.cos(rad) * self.speed, math.sin(rad) * self.speed]
+
+            if self.rect.collidepoint(self.target_pos):
+                self.path.pop(0)
+                self.arrived += 1
+
+        self.rect.centerx += self.velocity[0]
+        self.rect.centery += self.velocity[1]
+
+        self.velocity = [0, 0]
+
+        self.clamp(w, h)
 
     def draw(self, screen):
         super().draw(screen)
 
     def collision(self, collide_rect: pg.Rect) -> bool:
-        return self.rect.center == collide_rect.center
+        return self.rect.colliderect(collide_rect)

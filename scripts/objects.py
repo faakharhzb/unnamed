@@ -26,6 +26,7 @@ class Bullet(Sprite):
             math.sin(math.radians(self.angle)) * base_speed,
         )
 
+
     def update(self, screen: pg.Surface, dt: float):
         self.velocity = pg.Vector2(
             math.cos(math.radians(self.angle)) * (self.base_speed * dt),
