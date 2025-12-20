@@ -28,6 +28,13 @@ class Entity(pg.sprite.Sprite):
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(self.image, self.rect)
 
+    def clamp(
+        self, pos: pg.Vector2, min_pos: pg.Vector2, max_pos: pg.Vector2
+    ) -> pg.Vector2:
+        return pg.Vector2(
+            max(min_pos.x, min(pos.x, max_pos.x)), max(min_pos.y, min(pos.y, max_pos.y))
+        )
+
 
 class Player(Entity):
     def __init__(self, pos: list[int], image: pg.Surface, base_speed: int) -> None:
@@ -35,8 +42,9 @@ class Player(Entity):
         self.ammo = 30
         self.moved = False
 
-    def update(self, dt: float) -> None:
+    def update(self, dt: float, w: int, h: int) -> None:
         super().update(dt)
+        self.position = super().clamp(self.position, pg.Vector2(0, 0), pg.Vector2(w, h))
 
         up, down, left, right = False, False, False, False
 
@@ -79,7 +87,7 @@ class Enemy(Entity):
         self.grid = Grid(matrix=self.matrix)
         self.finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
 
-        self.arrived = set()
+        self.arrived = []
         self.path = self.find_path(pg.Vector2())
 
     def find_path(self, target_pos: pg.Vector2) -> list[GridNode]:
@@ -103,28 +111,38 @@ class Enemy(Entity):
                 self.target_pos.x - self.position.x,
             )
         )
+
         return angle
 
-    def update(self, target: pg.sprite.Sprite, act_dist: int, dt: float) -> None:
+    def update(
+        self, target: pg.sprite.Sprite, act_dist: int, dt: float, w: int, h: int
+    ) -> None:
         super().update(dt)
+        self.position = super().clamp(self.position, pg.Vector2(0, 0), pg.Vector2(w, h))
+
+        if target.moved:
+            self.path = self.find_path(pg.Vector2(target.rect.center))
 
         for point in self.path:
-            if point not in list(self.arrived):
-                self.target_pos = pg.Vector2(
-                    point.x * len(self.matrix[0]),
-                    point.y * len(self.matrix[1]),
-                )
-                self.angle = self.get_angle(self.target_pos)
+            if point not in self.arrived:
+                tile_size = 40
+                self.target_pos = pg.Vector2(point.x * tile_size, point.y * tile_size)
+                direction = self.target_pos - self.position
 
-                if len(self.path) - len(self.arrived) < 15:
-                    self.velocity = pg.Vector2(self.speed).rotate(self.angle)
+                if direction.length() > 0:
+                    direction = direction.normalize()
+                    self.velocity = direction * self.speed
                 else:
                     self.velocity = pg.Vector2(0, 0)
-            else:
-                self.arrived.add(point)
+
+                # Mark point as arrived when close enough
+                if (self.target_pos - self.position).length() < 5:
+                    self.arrived.append(point)
+
+                break
 
     def draw(self, screen):
         super().draw(screen)
 
     def collision(self, collide_rect: pg.Rect) -> bool:
-        return self.rect.center == collide_rect.center
+        return self.rect.colliderect(collide_rect)

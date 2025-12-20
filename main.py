@@ -1,13 +1,11 @@
 import numpy as np
 import pygame as pg
-from pygame.locals import QUIT
 
 import sys
 import math
 import random
 import asyncio
 
-from scripts.settings import *
 from scripts.utilities import show_text, load_image
 from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
@@ -18,7 +16,8 @@ class Main:
     def __init__(self, matrix: np.ndarray | list) -> None:
         pg.init()
         pg.display.set_caption("Unnamed Game")
-        self.screen = pg.display.set_mode(SIZE, SCREEN_FLAGS)
+        self.screen = pg.display.set_mode((1280, 720))
+        self.w, self.h = self.screen.get_size()
 
         self.images = {
             "player": load_image("player.png", "white", scale=3),
@@ -27,14 +26,9 @@ class Main:
             "background": load_image("background.png", "white"),
         }
 
-        self.background = pg.transform.scale_by(
-            self.images["background"],
-            min(
-                WIDTH / self.images["background"].get_width(),
-                HEIGHT / self.images["background"].get_height(),
-            ),
+        self.background = pg.transform.scale(
+            self.images["background"], (self.w, self.h)
         )
-        self.bg_size = self.background.get_size()
 
         self.fps_font = pg.font.SysFont("arial", 20)
         self.clock = pg.time.Clock()
@@ -42,15 +36,15 @@ class Main:
         self.mousepos = pg.mouse.get_pos()
 
         self.player = Player(
-            [self.bg_size[0] // 2, self.bg_size[1] // 2],
+            [self.w // 2, self.h // 2],
             self.images["player"],
-            500,
+            8,
         )
         self.rifle = Gun(self.images["rifle"], self.player.rect.center)
         self.enemy = Enemy(
-            [random.randint(1, WIDTH), random.randint(1, HEIGHT)],
+            [random.randint(1, self.w), random.randint(1, self.h)],
             self.images["enemy"],
-            self.player.base_speed - 100,
+            self.player.base_speed - 1,
             matrix,
         )
         self.camera = Camera(self.player, pg.Vector2())
@@ -79,7 +73,7 @@ class Main:
                 [12, 12],
                 self.player.position.xy,
                 player_to_mouse_angle,
-                900,
+                15,
                 "black",
             )
             self.player.ammo -= 1
@@ -94,8 +88,8 @@ class Main:
             ammo = Obtainable_Item(
                 ammo_surface,
                 (
-                    random.randint(0, self.bg_size[0]),
-                    random.randint(0, self.bg_size[1]),
+                    random.randint(0, self.w),
+                    random.randint(0, self.h),
                 ),
             )
             self.all_sprites.add(ammo)
@@ -142,43 +136,36 @@ class Main:
 
                 self.enemy = Enemy(
                     [
-                        random.randint(10, WIDTH),
-                        random.randint(10, HEIGHT),
+                        random.randint(10, self.w),
+                        random.randint(10, self.h),
                     ],
                     self.images["enemy"],
-                    self.player.base_speed - 44,
+                    self.player.base_speed - 1,
                     self.matrix,
                 )
                 self.enemy.add(self.all_sprites)
 
-        self.player.update(self.dt)
+        self.player.update(self.dt, self.w, self.h)
         self.rifle.update(
             player_to_mouse_angle,
             (self.player.rect.centerx, self.player.rect.centery),
         )
 
-        if self.player.moved:
-            self.enemy.path = self.enemy.find_path(self.player.position)
-
-        self.enemy.update(self.player, 240, self.dt)
+        self.enemy.update(self.player, 240, self.dt, self.w, self.h)
 
     async def main(self) -> None:
         self.running = True
         while self.running:
             for event in pg.event.get():
-                if event.type == QUIT:
+                if event.type == pg.QUIT:
                     self.running = False
 
-            self.dt = self.clock.tick(FPS) / 1000
+            self.dt = (self.clock.tick() / 1000) * 60
             await asyncio.sleep(0)
-
-            self.all_sprites, self.bg_pos = self.camera.apply_offset(
-                self.all_sprites
-            )
 
             self.main_game()
 
-            self.screen.blit(self.background, self.bg_pos)
+            self.screen.blit(self.background)
 
             for entity in self.all_sprites:
                 entity.draw(self.screen)

@@ -75,10 +75,12 @@ class Gun(Sprite):
         self.rect.center = self.position.x, self.position.y
 
         if self.angle in self.cache:
-            self.image = self.cache[self.angle]
+            self.image = self.cache[self.angle][0]
+            self.rect = self.cache[self.angle][1]
         else:
             self.image = pg.transform.rotate(self.base_image, self.angle)
-            self.cache[self.angle] = self.image
+            self.rect = self.image.get_rect(center=self.position)
+            self.cache[self.angle] = [self.image, self.rect]
 
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(
