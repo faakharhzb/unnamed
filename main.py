@@ -13,7 +13,7 @@ from scripts.camera import Camera
 
 
 class Main:
-    def __init__(self, matrix: np.ndarray | list) -> None:
+    def __init__(self, matrix: np.ndarray | list, tile_size: int) -> None:
         pg.init()
         pg.display.set_caption("Unnamed Game")
         self.screen = pg.display.set_mode((1280, 720))
@@ -46,6 +46,7 @@ class Main:
             self.images["enemy"],
             self.player.base_speed - 1,
             matrix,
+            tile_size,
         )
         self.camera = Camera(self.player, pg.Vector2())
         self.all_sprites = pg.sprite.Group(self.player, self.rifle, self.enemy)
@@ -59,6 +60,7 @@ class Main:
         self.running = True
 
         self.matrix = matrix
+        self.tile_size = tile_size
 
     def shoot(self) -> None:
         self.mousepos = pg.mouse.get_pos()
@@ -118,14 +120,6 @@ class Main:
                 self.ammos.remove(ammo)
                 self.player.ammo += 15
 
-        show_text(
-            f"Ammo: {self.player.ammo}",
-            self.fps_font,
-            "white",
-            [5, 50],
-            self.screen,
-        )
-
         if pg.mouse.get_pressed() == (1, 0, 0) and self.player.ammo != 0:
             self.shoot()
 
@@ -142,6 +136,7 @@ class Main:
                     self.images["enemy"],
                     self.player.base_speed - 1,
                     self.matrix,
+                    self.tile_size,
                 )
                 self.enemy.add(self.all_sprites)
 
@@ -151,7 +146,7 @@ class Main:
             (self.player.rect.centerx, self.player.rect.centery),
         )
 
-        self.enemy.update(self.player, 240, self.dt, self.w, self.h)
+        self.enemy.update(self.player, 400, self.dt, self.w, self.h)
 
     async def main(self) -> None:
         self.running = True
@@ -177,18 +172,28 @@ class Main:
                 [5, 0],
                 self.screen,
             )
+            show_text(
+                f"Ammo: {self.player.ammo}",
+                self.fps_font,
+                "white",
+                [5, 50],
+                self.screen,
+            )
 
-            if hasattr(self.enemy, "path"):
-                for node in self.enemy.path:
-                    pg.draw.circle(
-                        self.screen,
-                        "black",
-                        (
-                            node.x * len(self.matrix[0]),
-                            node.y * len(self.matrix[1]),
-                        ),
-                        10,
-                    )
+            for point in self.enemy.path:
+                pg.draw.circle(
+                    self.screen,
+                    "black",
+                    (
+                        point.x * self.tile_size,
+                        point.y * self.tile_size,
+                    ),
+                    10,
+                )
+
+            pg.draw.rect(self.screen, "red", self.player.rect, 5)
+            pg.draw.rect(self.screen, "blue", self.enemy.rect, 5)
+            pg.draw.circle(self.screen, "orange", self.enemy.target_pos, 10)
 
             pg.display.flip()
 
@@ -198,5 +203,5 @@ class Main:
 
 if __name__ == "__main__":
     matrix = np.ones((50, 50), dtype=int)
-    main = Main(matrix)
+    main = Main(matrix, 40)
     asyncio.run(main.main())

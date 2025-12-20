@@ -1,13 +1,12 @@
 import pygame as pg
-from os import path, listdir
-from .settings import BASE_IMAGE_PATH
+import os
 
 
 def load_image(
     image_path: str, colorkey: pg.Color, alpha: bool = False, scale: float = 1
 ) -> pg.Surface:
     image = pg.transform.scale_by(
-        pg.image.load(BASE_IMAGE_PATH + image_path), scale
+        pg.image.load("./assets/images/" + image_path), scale
     )
     image.set_colorkey(colorkey) if not alpha else False
     return image.convert_alpha() if alpha else image.convert()
@@ -15,8 +14,8 @@ def load_image(
 
 def load_images(image_folder: str, colorkey: int) -> list:
     return [
-        load_image(path.join(image_folder, image), colorkey)
-        for image in sorted(listdir(image_folder))
+        load_image(os.path.join(image_folder, image), colorkey)
+        for image in sorted(os.listdir(image_folder))
     ]
 
 
