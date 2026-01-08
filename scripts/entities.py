@@ -1,4 +1,5 @@
 import math
+import random
 from numpy import ndarray
 import pygame as pg
 from pathfinding.core.grid import Grid, GridNode
@@ -36,6 +37,14 @@ class Entity(pg.sprite.Sprite):
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(self.image, self.rect)
 
+    def clamp(
+        self, pos: pg.Vector2, min_pos: pg.Vector2, max_pos: pg.Vector2
+    ) -> pg.Vector2:
+        return pg.Vector2(
+            max(min_pos.x + self.image.get_width() // 2, min(pos.x, max_pos.x)),
+            max(min_pos.y + self.image.get_height() // 2, min(pos.y, max_pos.y)),
+        )
+
 
 class Player(Entity):
     def __init__(self, pos: list[int], image: pg.Surface, base_speed: int) -> None:
@@ -43,11 +52,15 @@ class Player(Entity):
         self.ammo = 30
         self.moved = False
 
+<<<<<<< HEAD
     def clamp(self, w: int, h: int) -> None:
         super().clamp(w, h)
 
+=======
+>>>>>>> temp-branch
     def update(self, dt: float, w: int, h: int) -> None:
         super().update(dt)
+        self.position = super().clamp(self.position, pg.Vector2(0, 0), pg.Vector2(w, h))
 
         up, down, left, right = False, False, False, False
 
@@ -83,6 +96,11 @@ class Enemy(Entity):
         image: pg.Surface,
         base_speed: int,
         matrix: list | ndarray,
+<<<<<<< HEAD
+=======
+        tile_x: int,
+        tile_y: int,
+>>>>>>> temp-branch
         rows: int,
         cols: int,
     ) -> None:
@@ -94,10 +112,12 @@ class Enemy(Entity):
         self.base_speed = base_speed
         self.velocity = [self.base_speed, 0]
         self.matrix = matrix
+        self.tile_x, self.tile_y = tile_x, tile_y
 
         self.grid = Grid(matrix=self.matrix)
         self.finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
 
+<<<<<<< HEAD
         self.path = []
         self.player_moved = False
         self.arrived = 0
@@ -117,14 +137,32 @@ class Enemy(Entity):
         self.end = self.grid.node(
             int(target_pos[0] // 40),
             int(target_pos[1] // 40),
+=======
+        self.arrived = []
+        self.path = [[], ""]
+
+        self.target_pos = pg.Vector2()
+        self.rows, self.cols = rows, cols
+
+    def find_path(self, target_pos: pg.Vector2, reason: str) -> list[GridNode, str]:
+        self.start = self.grid.node(
+            min(int(self.position.x // self.tile_x), self.rows - 1),
+            min(int(self.position.y // self.tile_y), self.cols - 1),
+        )
+
+        self.end = self.grid.node(
+            min(int(target_pos.x // self.tile_x), self.rows - 1),
+            min(int(target_pos.y // self.tile_y), self.cols - 1),
+>>>>>>> temp-branch
         )
 
         path, _ = self.finder.find_path(self.start, self.end, self.grid)
-        return path
+        return [path, reason]
 
     def get_angle(self, target_pos: pg.Vector2) -> int:
         angle = math.degrees(
             math.atan2(
+<<<<<<< HEAD
                 self.target_pos[1] - self.rect.centery,
                 self.target_pos[0] - self.rect.centerx,
             )
@@ -164,6 +202,51 @@ class Enemy(Entity):
         self.velocity = [0, 0]
 
         self.clamp(w, h)
+=======
+                target_pos.y - self.position.y,
+                target_pos.x - self.position.x,
+            )
+        )
+
+        return angle
+
+    def update(
+        self, dt: float, w: int, h: int, target: Entity, chase_distance: int
+    ) -> None:
+        super().update(dt)
+        self.position = super().clamp(self.position, pg.Vector2(), pg.Vector2(w, h))
+
+        if not self.path:
+            self.path = self.find_path(target.position, "roam")
+
+        distance = math.hypot(
+            self.position.x - target.position.x,
+            self.position.y - target.position.y,
+        )
+        if distance < chase_distance:
+            if target.moved or self.path[1] != "chase" or len(self.path[0]) == 0:
+                self.path = self.find_path(target.position, "chase")
+        else:
+            if self.path[1] != "roam" or len(self.path[0]) == 0:
+                roam_dest = pg.Vector2(
+                    random.randint(0, self.rows) * self.tile_x,
+                    random.randint(0, self.cols) * self.tile_y,
+                )
+                self.path = self.find_path(roam_dest, "roam")
+
+        if self.path[0]:
+            point = self.path[0][0]
+            self.target_pos = pg.Vector2(point.x * self.tile_x, point.y * self.tile_y)
+            angle = self.get_angle(self.target_pos)
+
+            if self.path[1] == "chase":
+                self.velocity = pg.Vector2(self.speed).rotate(angle)
+            else:
+                self.velocity = pg.Vector2(self.speed - 0.5).rotate(angle)
+
+            if self.rect.collidepoint(self.target_pos):
+                self.path[0].pop(0)
+>>>>>>> temp-branch
 
     def draw(self, screen):
         super().draw(screen)

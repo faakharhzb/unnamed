@@ -2,23 +2,35 @@ import numpy as np
 import pygame as pg
 
 import sys
-import math
 import random
 import asyncio
 
 from scripts.utilities import show_text, load_image
 from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
+<<<<<<< HEAD
 from scripts.camera import Camera
 from scripts.grid import grid
+=======
+>>>>>>> temp-branch
 
 
 class Main:
     def __init__(
+<<<<<<< HEAD
         self, matrix: np.ndarray | list, rows: int, cols: int
     ) -> None:
         self.rows, self.cols = rows, cols
 
+=======
+        self,
+        matrix: np.ndarray | list,
+        tile_x: int,
+        tile_y: int,
+        rows: int,
+        cols: int,
+    ) -> None:
+>>>>>>> temp-branch
         pg.init()
 
         pg.display.set_caption("Unnamed Game")
@@ -26,8 +38,8 @@ class Main:
         self.w, self.h = self.screen.get_size()
 
         self.images = {
-            "player": load_image("player.png", "white", scale=3),
-            "enemy": load_image("enemy.png", "white"),
+            "player": load_image("player.png", "white", scale=2.8),
+            "enemy": load_image("enemy.png", "white", scale=1.1),
             "rifle": load_image("guns/rifle.png", "white", scale=1.5),
             "background": load_image("background.png", "white"),
         }
@@ -35,6 +47,10 @@ class Main:
         self.background = pg.transform.scale(
             self.images["background"], (self.w, self.h)
         )
+<<<<<<< HEAD
+=======
+        self.bg_pos = pg.Vector2()
+>>>>>>> temp-branch
 
         self.fps_font = pg.font.SysFont("arial", 20)
         self.clock = pg.time.Clock()
@@ -44,18 +60,32 @@ class Main:
         self.player = Player(
             [self.w // 2, self.h // 2],
             self.images["player"],
-            500,
+            8,
         )
         self.rifle = Gun(self.images["rifle"], self.player.rect.center)
         self.enemy = Enemy(
+<<<<<<< HEAD
             [random.randint(1, self.w), random.randint(1, self.h)],
+=======
+            [
+                random.randint(10, self.w - 10),
+                random.randint(10, self.h - 10),
+            ],
+>>>>>>> temp-branch
             self.images["enemy"],
-            self.player.base_speed - 100,
+            self.player.base_speed - 1,
             matrix,
+<<<<<<< HEAD
             self.rows,
             self.cols,
+=======
+            tile_x,
+            tile_y,
+            rows,
+            cols,
+>>>>>>> temp-branch
         )
-        self.camera = Camera(self.player, pg.Vector2())
+
         self.all_sprites = pg.sprite.Group(self.player, self.rifle, self.enemy)
         self.bullets = pg.sprite.Group()
         self.ammos = pg.sprite.Group()
@@ -67,9 +97,12 @@ class Main:
         self.running = True
 
         self.matrix = matrix
+        self.tile_x, self.tile_y = tile_x, tile_y
+        self.rows, self.cols = rows, cols
 
     def shoot(self) -> None:
         self.mousepos = pg.mouse.get_pos()
+<<<<<<< HEAD
         player_to_mouse_angle = math.degrees(
             math.atan2(
                 self.mousepos[1] - self.player.rect.centery,
@@ -82,6 +115,15 @@ class Main:
                 self.player.rect.center,
                 player_to_mouse_angle,
                 900,
+=======
+
+        if pg.time.get_ticks() - self.bullet_cooldown >= 170:
+            bullet = Bullet(
+                [12, 12],
+                self.player.position.xy,
+                self.rifle.angle,
+                18,
+>>>>>>> temp-branch
                 "black",
             )
             self.player.ammo -= 1
@@ -106,6 +148,7 @@ class Main:
     def main_game(self) -> None:
         self.mousepos = pg.mouse.get_pos()
 
+<<<<<<< HEAD
         player_to_mouse_angle = math.degrees(
             math.atan2(
                 self.mousepos[1] - self.player.rect.centery,
@@ -113,6 +156,8 @@ class Main:
             )
         )
 
+=======
+>>>>>>> temp-branch
         if self.enemy.collision(self.player.rect):
             self.running = False
 
@@ -126,14 +171,6 @@ class Main:
                 self.ammos.remove(ammo)
                 self.player.ammo += 15
 
-        show_text(
-            f"Ammo: {self.player.ammo}",
-            self.fps_font,
-            "white",
-            [5, 50],
-            self.screen,
-        )
-
         if pg.mouse.get_pressed() == (1, 0, 0) and self.player.ammo != 0:
             self.shoot()
 
@@ -144,12 +181,22 @@ class Main:
 
                 self.enemy = Enemy(
                     [
+<<<<<<< HEAD
                         random.randint(10, self.w),
                         random.randint(10, self.h),
+=======
+                        random.randint(10, self.w - 10),
+                        random.randint(10, self.h - 10),
+>>>>>>> temp-branch
                     ],
                     self.images["enemy"],
-                    self.player.base_speed - 44,
+                    self.player.base_speed - 1,
                     self.matrix,
+<<<<<<< HEAD
+=======
+                    self.tile_x,
+                    self.tile_y,
+>>>>>>> temp-branch
                     self.rows,
                     self.cols,
                 )
@@ -157,14 +204,17 @@ class Main:
 
         self.player.update(self.dt, self.w, self.h)
         self.rifle.update(
-            player_to_mouse_angle,
-            (self.player.rect.centerx, self.player.rect.centery),
+            self.player.position,
         )
 
+<<<<<<< HEAD
         self.enemy.update(self.player, 240, self.dt, self.w, self.h)
 
         if self.player.moved:
             self.enemy.player_moved = True
+=======
+        self.enemy.update(self.dt, self.w, self.h, self.player, 500)
+>>>>>>> temp-branch
 
     async def main(self) -> None:
         self.running = True
@@ -173,6 +223,7 @@ class Main:
                 if event.type == pg.QUIT:
                     self.running = False
 
+<<<<<<< HEAD
             self.dt = self.clock.tick() / 1000
             await asyncio.sleep(0)
 
@@ -180,6 +231,11 @@ class Main:
             #     self.all_sprites
             # )
 
+=======
+            self.dt = (self.clock.tick() / 1000) * 60
+            await asyncio.sleep(0)
+
+>>>>>>> temp-branch
             self.main_game()
 
             self.screen.blit(self.background)
@@ -194,7 +250,15 @@ class Main:
                 [5, 0],
                 self.screen,
             )
+            show_text(
+                f"Ammo: {self.player.ammo}",
+                self.fps_font,
+                "white",
+                [5, 50],
+                self.screen,
+            )
 
+<<<<<<< HEAD
             if hasattr(self.enemy, "path"):
                 for node in self.enemy.path:
                     pg.draw.circle(
@@ -206,6 +270,30 @@ class Main:
                         ),
                         10,
                     )
+=======
+            for point in self.enemy.path[0]:
+                pg.draw.circle(
+                    self.screen,
+                    "black",
+                    (
+                        point.x * self.tile_x,
+                        point.y * self.tile_y,
+                    ),
+                    5,
+                )
+
+            pg.draw.rect(self.screen, "red", self.player.rect, 5)
+            pg.draw.rect(self.screen, "blue", self.enemy.rect, 5)
+            pg.draw.circle(self.screen, "orange", self.enemy.target_pos, 7)
+
+            for col in range(self.cols + 1):
+                x = col * self.tile_x
+                pg.draw.line(self.screen, "purple", (x, 0), (x, self.h), 1)
+
+            for row in range(self.rows + 1):
+                y = row * self.tile_y
+                pg.draw.line(self.screen, "purple", (0, y), (self.w, y), 1)
+>>>>>>> temp-branch
 
             pg.draw.rect(self.screen, "red", self.enemy.rect, 4)
             pg.draw.rect(self.screen, "blue", self.enemy.rect, 4)
@@ -217,6 +305,11 @@ class Main:
 
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     matrix = np.ones((40, 40), int)
     main = Main(matrix, 40, 40)
+=======
+    matrix = np.ones((40, 40), dtype=int)
+    main = Main(matrix, 32, 18, 40, 40)
+>>>>>>> temp-branch
     asyncio.run(main.main())
