@@ -21,16 +21,11 @@ class Bullet(Sprite):
         self.base_speed = base_speed
         self.position = pg.Vector2(pos)
         self.angle = angle
-        self.velocity = pg.Vector2(
-            math.cos(math.radians(self.angle)) * base_speed,
-            math.sin(math.radians(self.angle)) * base_speed,
-        )
+        self.velocity = pg.Vector2()
 
     def update(self, screen: pg.Surface, dt: float):
-        self.velocity = pg.Vector2(
-            math.cos(math.radians(self.angle)) * (self.base_speed * dt),
-            math.sin(math.radians(self.angle)) * (self.base_speed * dt),
-        )
+        self.speed = self.base_speed * dt
+        self.velocity = pg.Vector2(self.speed, 0).rotate(self.angle)
         self.position += self.velocity
         self.rect.centerx, self.rect.centery = self.position.x, self.position.y
 
@@ -41,7 +36,7 @@ class Bullet(Sprite):
         return self.rect.colliderect(collide_rect)
 
     def draw(self, screen: pg.Surface) -> None:
-        screen.blit(self.image, self.position)
+        screen.blit(self.image, self.rect)
 
 
 class Obtainable_Item(Sprite):
@@ -68,19 +63,33 @@ class Gun(Sprite):
         self.rect = self.image.get_rect(center=pos)
 
         self.cache = {}
+        self.angle = 0
 
-    def update(self, angle: int, pos: list[int, int]) -> None:
-        self.angle = int(-angle)
-        self.position = pg.Vector2(pos)
+    def get_angle(self, pos: pg.Vector2) -> None:
+        mousepos = pg.mouse.get_pos()
+        x = mousepos[0] - pos.x
+        y = mousepos[1] - pos.y
+
+        angle = int(math.degrees(math.atan2(y, x)))
+        angle = (angle + 360) % 360
+        return angle
+
+    def update(self, pos: pg.Vector2) -> None:
+        self.angle = self.get_angle(pos)
+        self.position = pos
         self.rect.center = self.position.x, self.position.y
 
         if self.angle in self.cache:
             self.image = self.cache[self.angle][0]
             self.rect = self.cache[self.angle][1]
         else:
-            self.image = pg.transform.rotate(self.base_image, self.angle)
+            self.image = pg.transform.rotate(
+                self.base_image,
+                -self.angle,
+            )
+
             self.rect = self.image.get_rect(center=self.position)
-            self.cache[self.angle] = [self.image, self.rect]
+            self.cache[self.angle] = [self.image, self.rect.copy()]
 
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(

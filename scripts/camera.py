@@ -10,7 +10,9 @@ class Camera:
         self.focus = focus
         self.background_pos = background_pos
 
-    def apply_offset(self, all_sprites: pg.sprite.Group) -> tuple[pg.sprite.Group, pg.Vector2]:
+    def apply_offset(
+        self, all_sprites: pg.sprite.Group
+    ) -> tuple[pg.sprite.Group, pg.Vector2]:
         for entity in all_sprites:
             entity.position -= self.focus.velocity
 

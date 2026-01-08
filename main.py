@@ -2,26 +2,31 @@ import numpy as np
 import pygame as pg
 
 import sys
-import math
 import random
 import asyncio
 
 from scripts.utilities import show_text, load_image
 from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
-from scripts.camera import Camera
 
 
 class Main:
-    def __init__(self, matrix: np.ndarray | list, tile_size: int) -> None:
+    def __init__(
+        self,
+        matrix: np.ndarray | list,
+        tile_x: int,
+        tile_y: int,
+        rows: int,
+        cols: int,
+    ) -> None:
         pg.init()
         pg.display.set_caption("Unnamed Game")
         self.screen = pg.display.set_mode((1280, 720))
         self.w, self.h = self.screen.get_size()
 
         self.images = {
-            "player": load_image("player.png", "white", scale=3),
-            "enemy": load_image("enemy.png", "white"),
+            "player": load_image("player.png", "white", scale=2.8),
+            "enemy": load_image("enemy.png", "white", scale=1.1),
             "rifle": load_image("guns/rifle.png", "white", scale=1.5),
             "background": load_image("background.png", "white"),
         }
@@ -29,6 +34,7 @@ class Main:
         self.background = pg.transform.scale(
             self.images["background"], (self.w, self.h)
         )
+        self.bg_pos = pg.Vector2()
 
         self.fps_font = pg.font.SysFont("arial", 20)
         self.clock = pg.time.Clock()
@@ -42,13 +48,19 @@ class Main:
         )
         self.rifle = Gun(self.images["rifle"], self.player.rect.center)
         self.enemy = Enemy(
-            [random.randint(1, self.w), random.randint(1, self.h)],
+            [
+                random.randint(10, self.w - 10),
+                random.randint(10, self.h - 10),
+            ],
             self.images["enemy"],
             self.player.base_speed - 1,
             matrix,
-            tile_size,
+            tile_x,
+            tile_y,
+            rows,
+            cols,
         )
-        self.camera = Camera(self.player, pg.Vector2())
+
         self.all_sprites = pg.sprite.Group(self.player, self.rifle, self.enemy)
         self.bullets = pg.sprite.Group()
         self.ammos = pg.sprite.Group()
@@ -60,22 +72,18 @@ class Main:
         self.running = True
 
         self.matrix = matrix
-        self.tile_size = tile_size
+        self.tile_x, self.tile_y = tile_x, tile_y
+        self.rows, self.cols = rows, cols
 
     def shoot(self) -> None:
         self.mousepos = pg.mouse.get_pos()
-        player_to_mouse_angle = math.degrees(
-            math.atan2(
-                self.mousepos[1] - self.player.position.y,
-                self.mousepos[0] - self.player.position.x,
-            )
-        )
+
         if pg.time.get_ticks() - self.bullet_cooldown >= 170:
             bullet = Bullet(
                 [12, 12],
                 self.player.position.xy,
-                player_to_mouse_angle,
-                15,
+                self.rifle.angle,
+                18,
                 "black",
             )
             self.player.ammo -= 1
@@ -100,13 +108,6 @@ class Main:
     def main_game(self) -> None:
         self.mousepos = pg.mouse.get_pos()
 
-        player_to_mouse_angle = math.degrees(
-            math.atan2(
-                self.mousepos[1] - self.player.position.y,
-                self.mousepos[0] - self.player.position.x,
-            )
-        )
-
         if self.enemy.collision(self.player.rect):
             self.running = False
 
@@ -130,23 +131,25 @@ class Main:
 
                 self.enemy = Enemy(
                     [
-                        random.randint(10, self.w),
-                        random.randint(10, self.h),
+                        random.randint(10, self.w - 10),
+                        random.randint(10, self.h - 10),
                     ],
                     self.images["enemy"],
                     self.player.base_speed - 1,
                     self.matrix,
-                    self.tile_size,
+                    self.tile_x,
+                    self.tile_y,
+                    self.rows,
+                    self.cols,
                 )
                 self.enemy.add(self.all_sprites)
 
         self.player.update(self.dt, self.w, self.h)
         self.rifle.update(
-            player_to_mouse_angle,
-            (self.player.rect.centerx, self.player.rect.centery),
+            self.player.position,
         )
 
-        self.enemy.update(self.player, 400, self.dt, self.w, self.h)
+        self.enemy.update(self.dt, self.w, self.h, self.player, 500)
 
     async def main(self) -> None:
         self.running = True
@@ -160,7 +163,7 @@ class Main:
 
             self.main_game()
 
-            self.screen.blit(self.background)
+            self.screen.blit(self.background, self.bg_pos)
 
             for entity in self.all_sprites:
                 entity.draw(self.screen)
@@ -180,20 +183,28 @@ class Main:
                 self.screen,
             )
 
-            for point in self.enemy.path:
+            for point in self.enemy.path[0]:
                 pg.draw.circle(
                     self.screen,
                     "black",
                     (
-                        point.x * self.tile_size,
-                        point.y * self.tile_size,
+                        point.x * self.tile_x,
+                        point.y * self.tile_y,
                     ),
-                    10,
+                    5,
                 )
 
             pg.draw.rect(self.screen, "red", self.player.rect, 5)
             pg.draw.rect(self.screen, "blue", self.enemy.rect, 5)
-            pg.draw.circle(self.screen, "orange", self.enemy.target_pos, 10)
+            pg.draw.circle(self.screen, "orange", self.enemy.target_pos, 7)
+
+            for col in range(self.cols + 1):
+                x = col * self.tile_x
+                pg.draw.line(self.screen, "purple", (x, 0), (x, self.h), 1)
+
+            for row in range(self.rows + 1):
+                y = row * self.tile_y
+                pg.draw.line(self.screen, "purple", (0, y), (self.w, y), 1)
 
             pg.display.flip()
 
@@ -202,6 +213,6 @@ class Main:
 
 
 if __name__ == "__main__":
-    matrix = np.ones((50, 50), dtype=int)
-    main = Main(matrix, 40)
+    matrix = np.ones((40, 40), dtype=int)
+    main = Main(matrix, 32, 18, 40, 40)
     asyncio.run(main.main())
