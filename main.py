@@ -1,3 +1,4 @@
+import ez_profile
 import numpy as np
 import pygame as pg
 
