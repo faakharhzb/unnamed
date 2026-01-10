@@ -8,21 +8,10 @@ import asyncio
 from scripts.utilities import show_text, load_image
 from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
-<<<<<<< HEAD
-from scripts.camera import Camera
-from scripts.grid import grid
-=======
->>>>>>> temp-branch
 
 
 class Main:
     def __init__(
-<<<<<<< HEAD
-        self, matrix: np.ndarray | list, rows: int, cols: int
-    ) -> None:
-        self.rows, self.cols = rows, cols
-
-=======
         self,
         matrix: np.ndarray | list,
         tile_x: int,
@@ -30,7 +19,6 @@ class Main:
         rows: int,
         cols: int,
     ) -> None:
->>>>>>> temp-branch
         pg.init()
 
         pg.display.set_caption("Unnamed Game")
@@ -47,10 +35,6 @@ class Main:
         self.background = pg.transform.scale(
             self.images["background"], (self.w, self.h)
         )
-<<<<<<< HEAD
-=======
-        self.bg_pos = pg.Vector2()
->>>>>>> temp-branch
 
         self.fps_font = pg.font.SysFont("arial", 20)
         self.clock = pg.time.Clock()
@@ -64,26 +48,17 @@ class Main:
         )
         self.rifle = Gun(self.images["rifle"], self.player.rect.center)
         self.enemy = Enemy(
-<<<<<<< HEAD
-            [random.randint(1, self.w), random.randint(1, self.h)],
-=======
             [
                 random.randint(10, self.w - 10),
                 random.randint(10, self.h - 10),
             ],
->>>>>>> temp-branch
             self.images["enemy"],
             self.player.base_speed - 1,
             matrix,
-<<<<<<< HEAD
-            self.rows,
-            self.cols,
-=======
             tile_x,
             tile_y,
             rows,
             cols,
->>>>>>> temp-branch
         )
 
         self.all_sprites = pg.sprite.Group(self.player, self.rifle, self.enemy)
@@ -102,20 +77,6 @@ class Main:
 
     def shoot(self) -> None:
         self.mousepos = pg.mouse.get_pos()
-<<<<<<< HEAD
-        player_to_mouse_angle = math.degrees(
-            math.atan2(
-                self.mousepos[1] - self.player.rect.centery,
-                self.mousepos[0] - self.player.rect.centerx,
-            )
-        )
-        if pg.time.get_ticks() - self.bullet_cooldown >= 170:
-            bullet = Bullet(
-                [12, 12],
-                self.player.rect.center,
-                player_to_mouse_angle,
-                900,
-=======
 
         if pg.time.get_ticks() - self.bullet_cooldown >= 170:
             bullet = Bullet(
@@ -123,7 +84,6 @@ class Main:
                 self.player.position.xy,
                 self.rifle.angle,
                 18,
->>>>>>> temp-branch
                 "black",
             )
             self.player.ammo -= 1
@@ -148,16 +108,6 @@ class Main:
     def main_game(self) -> None:
         self.mousepos = pg.mouse.get_pos()
 
-<<<<<<< HEAD
-        player_to_mouse_angle = math.degrees(
-            math.atan2(
-                self.mousepos[1] - self.player.rect.centery,
-                self.mousepos[0] - self.player.rect.centerx,
-            )
-        )
-
-=======
->>>>>>> temp-branch
         if self.enemy.collision(self.player.rect):
             self.running = False
 
@@ -181,22 +131,14 @@ class Main:
 
                 self.enemy = Enemy(
                     [
-<<<<<<< HEAD
-                        random.randint(10, self.w),
-                        random.randint(10, self.h),
-=======
                         random.randint(10, self.w - 10),
                         random.randint(10, self.h - 10),
->>>>>>> temp-branch
                     ],
                     self.images["enemy"],
                     self.player.base_speed - 1,
                     self.matrix,
-<<<<<<< HEAD
-=======
                     self.tile_x,
                     self.tile_y,
->>>>>>> temp-branch
                     self.rows,
                     self.cols,
                 )
@@ -206,15 +148,7 @@ class Main:
         self.rifle.update(
             self.player.position,
         )
-
-<<<<<<< HEAD
-        self.enemy.update(self.player, 240, self.dt, self.w, self.h)
-
-        if self.player.moved:
-            self.enemy.player_moved = True
-=======
         self.enemy.update(self.dt, self.w, self.h, self.player, 500)
->>>>>>> temp-branch
 
     async def main(self) -> None:
         self.running = True
@@ -223,19 +157,9 @@ class Main:
                 if event.type == pg.QUIT:
                     self.running = False
 
-<<<<<<< HEAD
-            self.dt = self.clock.tick() / 1000
-            await asyncio.sleep(0)
-
-            # self.all_sprites, self.bg_pos = self.camera.apply_offset(
-            #     self.all_sprites
-            # )
-
-=======
             self.dt = (self.clock.tick() / 1000) * 60
             await asyncio.sleep(0)
 
->>>>>>> temp-branch
             self.main_game()
 
             self.screen.blit(self.background)
@@ -258,19 +182,6 @@ class Main:
                 self.screen,
             )
 
-<<<<<<< HEAD
-            if hasattr(self.enemy, "path"):
-                for node in self.enemy.path:
-                    pg.draw.circle(
-                        self.screen,
-                        "black",
-                        (
-                            node.x * self.rows,
-                            node.y * self.cols,
-                        ),
-                        10,
-                    )
-=======
             for point in self.enemy.path[0]:
                 pg.draw.circle(
                     self.screen,
@@ -282,10 +193,6 @@ class Main:
                     5,
                 )
 
-            pg.draw.rect(self.screen, "red", self.player.rect, 5)
-            pg.draw.rect(self.screen, "blue", self.enemy.rect, 5)
-            pg.draw.circle(self.screen, "orange", self.enemy.target_pos, 7)
-
             for col in range(self.cols + 1):
                 x = col * self.tile_x
                 pg.draw.line(self.screen, "purple", (x, 0), (x, self.h), 1)
@@ -293,7 +200,6 @@ class Main:
             for row in range(self.rows + 1):
                 y = row * self.tile_y
                 pg.draw.line(self.screen, "purple", (0, y), (self.w, y), 1)
->>>>>>> temp-branch
 
             pg.draw.rect(self.screen, "red", self.enemy.rect, 4)
             pg.draw.rect(self.screen, "blue", self.enemy.rect, 4)
@@ -305,11 +211,6 @@ class Main:
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
-    matrix = np.ones((40, 40), int)
-    main = Main(matrix, 40, 40)
-=======
     matrix = np.ones((40, 40), dtype=int)
     main = Main(matrix, 32, 18, 40, 40)
->>>>>>> temp-branch
     asyncio.run(main.main())

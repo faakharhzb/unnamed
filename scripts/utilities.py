@@ -1,21 +1,13 @@
 import pygame as pg
-<<<<<<< HEAD
-from os import path, listdir
-=======
 import os
->>>>>>> temp-branch
 
 
 def load_image(
     image_path: str, colorkey: pg.Color, alpha: bool = False, scale: float = 1
 ) -> pg.Surface:
-<<<<<<< HEAD
-    image = pg.transform.scale_by(pg.image.load("./assets/images/" + image_path), scale)
-=======
     image = pg.transform.scale_by(
         pg.image.load("./assets/images/" + image_path), scale
     )
->>>>>>> temp-branch
     image.set_colorkey(colorkey) if not alpha else False
     return image.convert_alpha() if alpha else image.convert()
 
