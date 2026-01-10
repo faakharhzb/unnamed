@@ -23,7 +23,6 @@ class Bullet(Sprite):
         self.angle = angle
         self.velocity = pg.Vector2()
 
-
     def update(self, screen: pg.Surface, dt: float):
         self.speed = self.base_speed * dt
         self.velocity = pg.Vector2(self.speed, 0).rotate(self.angle)

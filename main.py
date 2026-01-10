@@ -1,5 +1,7 @@
+import ez_profile
 import numpy as np
 import pygame as pg
+import moderngl
 
 import sys
 import random
@@ -22,7 +24,9 @@ class Main:
         pg.init()
 
         pg.display.set_caption("Unnamed Game")
-        self.screen = pg.display.set_mode((1280, 720))
+        self.screen = pg.display.set_mode(
+            (1280, 720), pg.DOUBLEBUF | pg.OPENGL
+        )
         self.w, self.h = self.screen.get_size()
 
         self.images = {
@@ -44,7 +48,7 @@ class Main:
         self.player = Player(
             [self.w // 2, self.h // 2],
             self.images["player"],
-            8,
+            4,
         )
         self.rifle = Gun(self.images["rifle"], self.player.rect.center)
         self.enemy = Enemy(
@@ -75,6 +79,53 @@ class Main:
         self.tile_x, self.tile_y = tile_x, tile_y
         self.rows, self.cols = rows, cols
 
+        self.ctx = moderngl.create_context()
+
+        self.quad_buffer = self.ctx.buffer(
+            np.array(
+                [
+                    -1.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    0.0,
+                    -1.0,
+                    -1.0,
+                    0.0,
+                    1.0,
+                    1.0,
+                    -1.0,
+                    1.0,
+                    1.0,
+                ],
+                np.float32,
+            ).tobytes()
+        )
+
+        with open("scripts/shaders/shader.vert", "r") as f:
+            self.vert_shader = f.read()
+
+        with open("scripts/shaders/shader.frag", "r") as f:
+            self.frag_shader = f.read()
+
+        self.program = self.ctx.program(self.vert_shader, self.frag_shader)
+        self.vertex_array = self.ctx.vertex_array(
+            self.program,
+            [(self.quad_buffer, "2f 2f", "vert", "texcoord")],
+        )
+
+    def get_texture(self, surface: pg.Surface) -> moderngl.Texture:
+        texture = self.ctx.texture(
+            surface.get_size(), 4, surface.get_view("1")
+        )
+        texture.filter = (moderngl.NEAREST, moderngl.NEAREST)
+        texture.swizzle = "BGRA"
+
+        return texture
+
     def shoot(self) -> None:
         self.mousepos = pg.mouse.get_pos()
 
@@ -83,7 +134,7 @@ class Main:
                 [12, 12],
                 self.player.position.xy,
                 self.rifle.angle,
-                18,
+                self.player.base_speed * 5,
                 "black",
             )
             self.player.ammo -= 1
@@ -162,29 +213,28 @@ class Main:
 
             self.main_game()
 
-            self.screen.blit(self.background)
-
+            frame = self.background.copy()
             for entity in self.all_sprites:
-                entity.draw(self.screen)
+                entity.draw(frame)
 
             show_text(
                 f"{int(self.clock.get_fps() // 1)} FPS",
                 self.fps_font,
                 "white",
-                [5, 0],
-                self.screen,
+                [5, 5],
+                frame,
             )
             show_text(
                 f"Ammo: {self.player.ammo}",
                 self.fps_font,
                 "white",
-                [5, 50],
-                self.screen,
+                [5, 40],
+                frame,
             )
 
             for point in self.enemy.path[0]:
                 pg.draw.circle(
-                    self.screen,
+                    frame,
                     "black",
                     (
                         point.x * self.tile_x,
@@ -195,17 +245,26 @@ class Main:
 
             for col in range(self.cols + 1):
                 x = col * self.tile_x
-                pg.draw.line(self.screen, "purple", (x, 0), (x, self.h), 1)
+                pg.draw.line(frame, "purple", (x, 0), (x, self.h), 1)
 
             for row in range(self.rows + 1):
                 y = row * self.tile_y
-                pg.draw.line(self.screen, "purple", (0, y), (self.w, y), 1)
+                pg.draw.line(frame, "purple", (0, y), (self.w, y), 1)
 
-            pg.draw.rect(self.screen, "red", self.enemy.rect, 4)
-            pg.draw.rect(self.screen, "blue", self.enemy.rect, 4)
+            pg.draw.rect(frame, "red", self.enemy.rect, 4)
+            pg.draw.rect(frame, "blue", self.enemy.rect, 4)
+
+            self.screen.blit(frame)
+
+            self.texture = self.get_texture(frame)
+            self.texture.use()
+            self.program["tex"] = 0
+            self.vertex_array.render(moderngl.TRIANGLE_STRIP)
 
             pg.display.flip()
+            self.texture.release()
 
+        self.vertex_array.release()
         pg.quit()
         sys.exit()
 

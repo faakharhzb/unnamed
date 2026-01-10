@@ -18,7 +18,10 @@ class Entity(pg.sprite.Sprite):
         self.speed = speed
 
     def update(self, dt: float) -> None:
-        self.speed = self.base_speed * dt
+        if self.velocity.length() > 0:
+            self.velocity = self.velocity.normalize()
+
+        self.speed = self.base_speed
         self.position += self.velocity * self.speed
         self.rect.center = self.position
 
@@ -99,14 +102,15 @@ class Enemy(Entity):
 
     def find_path(self, target_pos: pg.Vector2, reason: str) -> list[GridNode, str]:
         self.start = self.grid.node(
-            min(int(self.position.x // self.tile_x), self.rows - 1),
-            min(int(self.position.y // self.tile_y), self.cols - 1),
-        )
+                min(int(self.position.x // self.tile_x), self.rows - 1),
+                min(int(self.position.y // self.tile_y), self.cols - 1),
+            )
         self.end = self.grid.node(
-            min(int(target_pos.x // self.tile_x), self.rows - 1),
-            min(int(target_pos.y // self.tile_y), self.cols - 1),
-        )
+                min(int(target_pos.x // self.tile_x), self.rows - 1),
+                min(int(target_pos.y // self.tile_y), self.cols - 1),
+            )
         path, _ = self.finder.find_path(self.start, self.end, self.grid)
+
         return [path, reason]
 
     def get_angle(self, target_pos: pg.Vector2) -> float:
