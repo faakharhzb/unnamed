@@ -163,29 +163,30 @@ class Main:
 
             self.main_game()
 
-            self.screen.blit(self.background)
+            frame = pg.Surface((self.w, self.h))
+            frame.blit(self.background, (0, 0))
 
             for entity in self.all_sprites:
-                entity.draw(self.screen)
+                entity.draw(frame)
 
             show_text(
                 f"{int(self.clock.get_fps() // 1)} FPS",
                 self.fps_font,
                 "white",
                 [5, 0],
-                self.screen,
+                frame,
             )
             show_text(
                 f"Ammo: {self.player.ammo}",
                 self.fps_font,
                 "white",
                 [5, 50],
-                self.screen,
+                frame,
             )
 
             for point in self.enemy.path[0]:
                 pg.draw.circle(
-                    self.screen,
+                    frame,
                     "black",
                     (
                         point.x * self.tile_x,
@@ -196,14 +197,16 @@ class Main:
 
             for col in range(self.cols + 1):
                 x = col * self.tile_x
-                pg.draw.line(self.screen, "purple", (x, 0), (x, self.h), 1)
+                pg.draw.line(frame, "purple", (x, 0), (x, self.h), 1)
 
             for row in range(self.rows + 1):
                 y = row * self.tile_y
-                pg.draw.line(self.screen, "purple", (0, y), (self.w, y), 1)
+                pg.draw.line(frame, "purple", (0, y), (self.w, y), 1)
 
-            pg.draw.rect(self.screen, "red", self.enemy.rect, 4)
-            pg.draw.rect(self.screen, "blue", self.enemy.rect, 4)
+            pg.draw.rect(frame, "red", self.enemy.rect, 4)
+            pg.draw.rect(frame, "blue", self.enemy.rect, 4)
+
+            self.screen.blit(frame)
 
             pg.display.flip()
 
