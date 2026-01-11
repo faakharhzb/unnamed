@@ -1,4 +1,3 @@
-import ez_profile
 import numpy as np
 import pygame as pg
 
@@ -45,7 +44,7 @@ class Main:
         self.player = Player(
             [self.w // 2, self.h // 2],
             self.images["player"],
-            8,
+            6,
         )
         self.rifle = Gun(self.images["rifle"], self.player.rect.center)
         self.enemy = Enemy(
@@ -163,30 +162,29 @@ class Main:
 
             self.main_game()
 
-            frame = pg.Surface((self.w, self.h))
-            frame.blit(self.background, (0, 0))
+            self.screen.blit(self.background)
 
             for entity in self.all_sprites:
-                entity.draw(frame)
+                entity.draw(self.screen)
 
             show_text(
                 f"{int(self.clock.get_fps() // 1)} FPS",
                 self.fps_font,
                 "white",
                 [5, 0],
-                frame,
+                self.screen,
             )
             show_text(
                 f"Ammo: {self.player.ammo}",
                 self.fps_font,
                 "white",
                 [5, 50],
-                frame,
+                self.screen,
             )
 
             for point in self.enemy.path[0]:
                 pg.draw.circle(
-                    frame,
+                    self.screen,
                     "black",
                     (
                         point.x * self.tile_x,
@@ -197,16 +195,14 @@ class Main:
 
             for col in range(self.cols + 1):
                 x = col * self.tile_x
-                pg.draw.line(frame, "purple", (x, 0), (x, self.h), 1)
+                pg.draw.line(self.screen, "purple", (x, 0), (x, self.h), 1)
 
             for row in range(self.rows + 1):
                 y = row * self.tile_y
-                pg.draw.line(frame, "purple", (0, y), (self.w, y), 1)
+                pg.draw.line(self.screen, "purple", (0, y), (self.w, y), 1)
 
-            pg.draw.rect(frame, "red", self.enemy.rect, 4)
-            pg.draw.rect(frame, "blue", self.enemy.rect, 4)
-
-            self.screen.blit(frame)
+            pg.draw.rect(self.screen, "red", self.enemy.rect, 4)
+            pg.draw.rect(self.screen, "blue", self.enemy.rect, 4)
 
             pg.display.flip()
 
