@@ -1,20 +1,31 @@
 import pygame as pg
+import moderngl
 import os
 
+def get_texture(surf: pg.Surface, ctx: moderngl.Context) -> moderngl.Texture:
+    texture = ctx.texture(
+            surf.get_size(), 4, surf.get_view("1")
+        )
+    texture.filter = (moderngl.NEAREST, moderngl.NEAREST)
+    texture.swizzle = "BGRA"
 
-def load_image(
-    image_path: str, colorkey: pg.Color, alpha: bool = False, scale: float = 1
-) -> pg.Surface:
-    image = pg.transform.scale_by(
+    return texture
+
+def load_texture(
+    image_path: str, colorkey: pg.Color, alpha: bool = False, scale: float = 1, ctx: moderngl.Context
+) -> moderngl.Texture:
+    surf = pg.transform.scale_by(
         pg.image.load("./assets/images/" + image_path), scale
     )
-    image.set_colorkey(colorkey) if not alpha else False
-    return image.convert_alpha() if alpha else image.convert()
+    surf.set_colorkey(colorkey) if not alpha else False
+    surf = surf.convert_alpha() if alpha else surf.convert()
+
+    return get_texture(surf, ctx)
 
 
-def load_images(image_folder: str, colorkey: int) -> list:
+def load_textures(image_folder: str, colorkey: int, ctx: moderngl.Context) -> list:
     return [
-        load_image(os.path.join(image_folder, image), colorkey)
+        load_texture(os.path.join(image_folder, image), colorkey, ctx=ctx)
         for image in sorted(os.listdir(image_folder))
     ]
 

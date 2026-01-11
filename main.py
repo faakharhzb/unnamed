@@ -1,4 +1,3 @@
-import ez_profile
 import numpy as np
 import pygame as pg
 import moderngl
@@ -7,7 +6,7 @@ import sys
 import random
 import asyncio
 
-from scripts.utilities import show_text, load_image
+from scripts.utilities import show_text, load_texture
 from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
 
@@ -29,11 +28,49 @@ class Main:
         )
         self.w, self.h = self.screen.get_size()
 
+        self.ctx = moderngl.create_context()
+
+        self.quad_buffer = self.ctx.buffer(
+            np.array(
+                [
+                    -1.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    0.0,
+                    -1.0,
+                    -1.0,
+                    0.0,
+                    1.0,
+                    1.0,
+                    -1.0,
+                    1.0,
+                    1.0,
+                ],
+                np.float32,
+            ).tobytes()
+        )
+
+        with open("scripts/shaders/shader.vert", "r") as f:
+            self.vert_shader = f.read()
+
+        with open("scripts/shaders/shader.frag", "r") as f:
+            self.frag_shader = f.read()
+
+        self.program = self.ctx.program(self.vert_shader, self.frag_shader)
+        self.vertex_array = self.ctx.vertex_array(
+            self.program,
+            [(self.quad_buffer, "2f 2f", "vert", "texcoord")],
+        )
+
         self.images = {
-            "player": load_image("player.png", "white", scale=2.8),
-            "enemy": load_image("enemy.png", "white", scale=1.1),
-            "rifle": load_image("guns/rifle.png", "white", scale=1.5),
-            "background": load_image("background.png", "white"),
+            "player": load_texture("player.png", "white", scale=2.8),
+            "enemy": load_texture("enemy.png", "white", scale=1.1),
+            "rifle": load_texture("guns/rifle.png", "white", scale=1.5),
+            "background": load_texture("background.png", "white"),
         }
 
         self.background = pg.transform.scale(
@@ -78,44 +115,6 @@ class Main:
         self.matrix = matrix
         self.tile_x, self.tile_y = tile_x, tile_y
         self.rows, self.cols = rows, cols
-
-        self.ctx = moderngl.create_context()
-
-        self.quad_buffer = self.ctx.buffer(
-            np.array(
-                [
-                    -1.0,
-                    1.0,
-                    0.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    -1.0,
-                    -1.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    -1.0,
-                    1.0,
-                    1.0,
-                ],
-                np.float32,
-            ).tobytes()
-        )
-
-        with open("scripts/shaders/shader.vert", "r") as f:
-            self.vert_shader = f.read()
-
-        with open("scripts/shaders/shader.frag", "r") as f:
-            self.frag_shader = f.read()
-
-        self.program = self.ctx.program(self.vert_shader, self.frag_shader)
-        self.vertex_array = self.ctx.vertex_array(
-            self.program,
-            [(self.quad_buffer, "2f 2f", "vert", "texcoord")],
-        )
 
     def get_texture(self, surface: pg.Surface) -> moderngl.Texture:
         texture = self.ctx.texture(
@@ -213,7 +212,9 @@ class Main:
 
             self.main_game()
 
-            frame = self.background.copy()
+            frame = pg.Surface((self.w, self.h))
+            frame.blit(self.background, (0, 0))
+
             for entity in self.all_sprites:
                 entity.draw(frame)
 
