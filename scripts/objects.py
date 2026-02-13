@@ -6,16 +6,14 @@ import math
 class Bullet(Sprite):
     def __init__(
         self,
+        image: pg.Surface,
         size: tuple[int, int],
         pos: tuple[float, float],
         angle: float,
         base_speed: float,
-        colour: pg.Color,
     ):
         super().__init__()
-        self.image = pg.Surface(size)
-        self.image.fill(colour)
-
+        self.image = image
         self.rect = self.image.get_rect(center=pos)
 
         self.base_speed = base_speed
@@ -23,6 +21,7 @@ class Bullet(Sprite):
         self.angle = angle
         self.velocity = pg.Vector2()
 
+        self.image = pg.transform.rotate(self.image, -self.angle)
 
     def update(self, screen: pg.Surface, dt: float):
         self.speed = self.base_speed * dt
@@ -55,6 +54,7 @@ class Obtainable_Item(Sprite):
 
 
 class Gun(Sprite):
+    # TODO: fix gun jittering
     def __init__(self, image: pg.Surface, pos: list[int, int]) -> None:
         super().__init__()
         self.base_image = image

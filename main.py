@@ -5,7 +5,7 @@ import sys
 import random
 import asyncio
 
-from scripts.utilities import show_text, load_image
+from scripts.utilities import show_text, load_image, load_images
 from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
 
@@ -26,12 +26,16 @@ class Main:
         self.w, self.h = self.screen.get_size()
 
         self.images = {
-            "player": load_image("player.png", "white", scale=2.8),
+            "player_idle": load_images("player/idle", "white", scale=(5, 6)),
+            "player_running": load_images(
+                "player/running", "white", scale=(5, 6)
+            ),
             "enemy": load_image("enemy.png", "white", scale=1.1),
-            "rifle": load_image("guns/rifle.png", "white", scale=1.5),
+            "rifle": load_image("guns/rifle.png", "white", scale=(2, 1.4)),
             "background": load_image("background.png", "white"),
+            "bullet": load_image("bullet.png", "white", scale=2),
         }
-
+        # TODO: Add player animation
         self.background = pg.transform.scale(
             self.images["background"], (self.w, self.h)
         )
@@ -41,9 +45,13 @@ class Main:
 
         self.mousepos = pg.mouse.get_pos()
 
+        self.player_images = {
+            "idle": self.images["player_idle"],
+            "running": self.images["player_running"],
+        }
         self.player = Player(
             [self.w // 2, self.h // 2],
-            self.images["player"],
+            self.player_images,
             6,
         )
         self.rifle = Gun(self.images["rifle"], self.player.rect.center)
@@ -53,7 +61,7 @@ class Main:
                 random.randint(10, self.h - 10),
             ],
             self.images["enemy"],
-            self.player.base_speed - 1,
+            self.player.base_speed - 1.5,
             matrix,
             tile_x,
             tile_y,
@@ -65,26 +73,32 @@ class Main:
         self.bullets = pg.sprite.Group()
         self.ammos = pg.sprite.Group()
 
-        self.dt = 1
+        self.dt = 0.017
         self.bullet_cooldown = pg.time.get_ticks()
         self.ammo_delay = pg.time.get_ticks()
 
         self.running = True
 
         self.matrix = matrix
-        self.tile_x, self.tile_y = tile_x, tile_y
+        self.tile_x, self.tile_y = tile_x + 1, tile_y + 1
         self.rows, self.cols = rows, cols
+
+        self.prev_fps = 0
+        self.fps_text = pg.Surface((10, 10))
+
+        self.prev_ammo = 0
+        self.ammo_text = pg.Surface((10, 10))
 
     def shoot(self) -> None:
         self.mousepos = pg.mouse.get_pos()
 
         if pg.time.get_ticks() - self.bullet_cooldown >= 170:
             bullet = Bullet(
+                self.images["bullet"],
                 [12, 12],
                 self.player.position.xy,
                 self.rifle.angle,
                 18,
-                "black",
             )
             self.player.ammo -= 1
             self.bullets.add(bullet)
@@ -127,28 +141,41 @@ class Main:
         for bullet in self.bullets:
             bullet.update(self.background, self.dt)
             if bullet.hit(self.enemy.rect):
-                self.enemy.kill()
+                self.enemy.health -= 1
+                if self.enemy.health == 0:
+                    self.enemy.kill()
 
-                self.enemy = Enemy(
-                    [
-                        random.randint(10, self.w - 10),
-                        random.randint(10, self.h - 10),
-                    ],
-                    self.images["enemy"],
-                    self.player.base_speed - 1,
-                    self.matrix,
-                    self.tile_x,
-                    self.tile_y,
-                    self.rows,
-                    self.cols,
-                )
-                self.enemy.add(self.all_sprites)
+                    self.enemy = Enemy(
+                        [
+                            random.randint(10, self.w - 10),
+                            random.randint(10, self.h - 10),
+                        ],
+                        self.images["enemy"],
+                        self.player.base_speed - 1.5,
+                        self.matrix,
+                        self.tile_x,
+                        self.tile_y,
+                        self.rows,
+                        self.cols,
+                    )
+                    self.enemy.add(self.all_sprites)
+
+                    self.player.kill_count += 1
+
+                bullet.kill()
+                self.bullets.remove(bullet)
+                self.all_sprites.remove(bullet)
 
         self.player.update(self.dt, self.w, self.h)
         self.rifle.update(
             self.player.position,
         )
         self.enemy.update(self.dt, self.w, self.h, self.player, 500)
+
+        if self.player.moved:
+            self.player.set_state("running")
+        else:
+            self.player.set_state("idle")
 
     async def main(self) -> None:
         self.running = True
@@ -167,42 +194,46 @@ class Main:
             for entity in self.all_sprites:
                 entity.draw(self.screen)
 
-            show_text(
-                f"{int(self.clock.get_fps() // 1)} FPS",
-                self.fps_font,
-                "white",
-                [5, 0],
-                self.screen,
-            )
-            show_text(
-                f"Ammo: {self.player.ammo}",
-                self.fps_font,
-                "white",
-                [5, 50],
-                self.screen,
-            )
+            fps = f"{round(self.clock.get_fps())} FPS"
+            if fps != self.prev_fps:
+                self.fps_text = self.fps_font.render(fps, True, "white")
 
-            for point in self.enemy.path[0]:
-                pg.draw.circle(
-                    self.screen,
-                    "black",
-                    (
-                        point.x * self.tile_x,
-                        point.y * self.tile_y,
-                    ),
-                    5,
-                )
+            self.screen.blit(self.fps_text, (5, 0))
 
-            for col in range(self.cols + 1):
-                x = col * self.tile_x
-                pg.draw.line(self.screen, "purple", (x, 0), (x, self.h), 1)
+            ammo = f"Ammo: {self.player.ammo}"
+            if ammo != self.prev_ammo:
+                self.ammo_text = self.fps_font.render(ammo, True, "white")
 
-            for row in range(self.rows + 1):
-                y = row * self.tile_y
-                pg.draw.line(self.screen, "purple", (0, y), (self.w, y), 1)
+            self.screen.blit(self.ammo_text, (5, 50))
 
-            pg.draw.rect(self.screen, "red", self.enemy.rect, 4)
-            pg.draw.rect(self.screen, "blue", self.enemy.rect, 4)
+            # for point in self.enemy.path[0]:
+            #     pg.draw.circle(
+            #         self.screen,
+            #         "black",
+            #         (
+            #             point.x * self.tile_x,
+            #             point.y * self.tile_y,
+            #         ),
+            #         8,
+            #     )
+            # point = self.enemy.path[0][0]
+            # pg.draw.circle(
+            #     self.screen,
+            #     "orange",
+            #     (point.x * self.tile_x, point.y * self.tile_y),
+            #     8,
+            # )
+            #
+            # for col in range(self.cols + 1):
+            #     x = col * self.tile_x
+            #     pg.draw.line(self.screen, "purple", (x, 0), (x, self.h), 1)
+            #
+            # for row in range(self.rows + 1):
+            #     y = row * self.tile_y
+            #     pg.draw.line(self.screen, "purple", (0, y), (self.w, y), 1)
+            #
+            # pg.draw.rect(self.screen, "red", self.enemy.rect, 4)
+            # pg.draw.rect(self.screen, "blue", self.enemy.rect, 4)
 
             pg.display.flip()
 
