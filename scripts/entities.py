@@ -158,6 +158,11 @@ class Enemy(Entity):
 
         self.max_health = max_health
         self.health = self.max_health
+        self.health_bar = pg.Rect(
+            self.rect.left, self.rect.top - 10, self.image.get_width(), 10
+        )
+        self.health_bar_colour = "green"
+        self.health_bar_outline = self.health_bar.inflate((3, 3))
 
     def find_path(self, target_pos: pg.Vector2, reason: str) -> list[GridNode, str]:
         self.start = self.grid.node(
@@ -219,8 +224,25 @@ class Enemy(Entity):
             if self.rect.collidepoint(self.target_pos):
                 self.path[0].pop(0)
 
+        ratio = self.health / self.max_health
+
+        self.health_bar.center = (self.rect.centerx, self.rect.top - 12)
+        self.health_bar.width = self.image.get_width() * ratio
+        self.health_bar_outline.center = self.health_bar.center
+
+        if ratio > 0.75:
+            self.health_bar_colour = "green"
+        elif ratio > 0.50:
+            self.health_bar_colour = "orange"
+        elif ratio > 0.25:
+            self.health_bar_colour = "yellow"
+        else:
+            self.health_bar_colour = "red"
+
     def draw(self, screen):
         super().draw(screen)
+        pg.draw.rect(screen, self.health_bar_colour, self.health_bar)
+        pg.draw.rect(screen, "black", self.health_bar_outline, 3)
 
     def collision(self, collide_rect: pg.Rect) -> bool:
         return self.rect.colliderect(collide_rect)

@@ -7,7 +7,6 @@ class Bullet(Sprite):
     def __init__(
         self,
         image: pg.Surface,
-        size: tuple[int, int],
         pos: tuple[float, float],
         angle: float,
         base_speed: float,

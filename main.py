@@ -35,12 +35,11 @@ class Main:
             "background": load_image("background.png", "white"),
             "bullet": load_image("bullet.png", "white", scale=2),
         }
-        # TODO: Add player animation
         self.background = pg.transform.scale(
             self.images["background"], (self.w, self.h)
         )
 
-        self.fps_font = pg.font.SysFont("arial", 20)
+        self.fps_font = pg.Font(size=33)
         self.clock = pg.time.Clock()
 
         self.mousepos = pg.mouse.get_pos()
@@ -89,13 +88,15 @@ class Main:
         self.prev_ammo = 0
         self.ammo_text = pg.Surface((10, 10))
 
+        self.prev_kills = 0
+        self.kills_text = pg.Surface((10, 10))
+
     def shoot(self) -> None:
         self.mousepos = pg.mouse.get_pos()
 
         if pg.time.get_ticks() - self.bullet_cooldown >= 170:
             bullet = Bullet(
                 self.images["bullet"],
-                [12, 12],
                 self.player.position.xy,
                 self.rifle.angle,
                 18,
@@ -133,7 +134,7 @@ class Main:
             if ammo.collision(self.player.rect):
                 self.all_sprites.remove(ammo)
                 self.ammos.remove(ammo)
-                self.player.ammo += 15
+                self.player.ammo += 12
 
         if pg.mouse.get_pressed() == (1, 0, 0) and self.player.ammo != 0:
             self.shoot()
@@ -206,6 +207,15 @@ class Main:
 
             self.screen.blit(self.ammo_text, (5, 50))
 
+            kills = f"Kills: {self.player.kill_count}"
+            if kills != self.prev_kills:
+                self.kills_text = self.fps_font.render(kills, True, "white")
+
+            self.screen.blit(
+                self.kills_text,
+                (self.w - (self.kills_text.get_width() + 10), 0),
+            )
+
             # for point in self.enemy.path[0]:
             #     pg.draw.circle(
             #         self.screen,
@@ -232,8 +242,8 @@ class Main:
             #     y = row * self.tile_y
             #     pg.draw.line(self.screen, "purple", (0, y), (self.w, y), 1)
             #
-            # pg.draw.rect(self.screen, "red", self.enemy.rect, 4)
-            # pg.draw.rect(self.screen, "blue", self.enemy.rect, 4)
+            # pg.draw.rect(self.screen, "red", self.enemy.rect, 1)
+            # pg.draw.rect(self.screen, "blue", self.player.rect, 4)
 
             pg.display.flip()
 
