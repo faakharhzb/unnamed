@@ -22,13 +22,13 @@ class Bullet(Sprite):
 
         self.image = pg.transform.rotate(self.image, -self.angle)
 
-    def update(self, screen: pg.Surface, dt: float):
+    def update(self, screen_rect: pg.Rect, dt: float):
         self.speed = self.base_speed * dt
         self.velocity = pg.Vector2(self.speed, 0).rotate(self.angle)
         self.position += self.velocity
         self.rect.centerx, self.rect.centery = self.position.x, self.position.y
 
-        if not screen.get_rect().contains(self.rect):
+        if not screen_rect.contains(self.rect):
             self.kill()
 
     def hit(self, collide_rect: pg.Rect) -> None:

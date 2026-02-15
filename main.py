@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pygame as pg
 
@@ -5,6 +6,7 @@ import sys
 import random
 import asyncio
 
+from scripts.camera import Camera
 from scripts.utilities import show_text, load_image, load_images
 from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
@@ -38,6 +40,8 @@ class Main:
         self.background = pg.transform.scale(
             self.images["background"], (self.w, self.h)
         )
+        self.bg_position = pg.Vector2()
+        self.bg_rect = self.background.get_rect(topleft=(0, 0))
 
         self.fps_font = pg.Font(size=33)
         self.clock = pg.time.Clock()
@@ -52,13 +56,17 @@ class Main:
             [self.w // 2, self.h // 2],
             self.player_images,
             6,
+            matrix,
+            tile_x,
+            tile_y,
+            rows,
+            cols,
         )
         self.rifle = Gun(self.images["rifle"], self.player.rect.center)
         self.enemy = Enemy(
-            [
-                random.randint(10, self.w - 10),
-                random.randint(10, self.h - 10),
-            ],
+            Enemy.get_random_position(
+                self.player.position, 75, self.w, self.h
+            ),
             self.images["enemy"],
             self.player.base_speed - 1.5,
             matrix,
@@ -67,6 +75,8 @@ class Main:
             rows,
             cols,
         )
+
+        self.camera = Camera(self.player, self.bg_position)
 
         self.all_sprites = pg.sprite.Group(self.player, self.rifle, self.enemy)
         self.bullets = pg.sprite.Group()
@@ -134,23 +144,22 @@ class Main:
             if ammo.collision(self.player.rect):
                 self.all_sprites.remove(ammo)
                 self.ammos.remove(ammo)
-                self.player.ammo += 12
+                self.player.ammo += 10
 
         if pg.mouse.get_pressed() == (1, 0, 0) and self.player.ammo != 0:
             self.shoot()
 
         for bullet in self.bullets:
-            bullet.update(self.background, self.dt)
+            bullet.update(self.bg_rect, self.dt)
             if bullet.hit(self.enemy.rect):
                 self.enemy.health -= 1
                 if self.enemy.health == 0:
                     self.enemy.kill()
 
                     self.enemy = Enemy(
-                        [
-                            random.randint(10, self.w - 10),
-                            random.randint(10, self.h - 10),
-                        ],
+                        Enemy.get_random_position(
+                            self.player.position, 75, self.w, self.h
+                        ),
                         self.images["enemy"],
                         self.player.base_speed - 1.5,
                         self.matrix,
@@ -164,10 +173,8 @@ class Main:
                     self.player.kill_count += 1
 
                 bullet.kill()
-                self.bullets.remove(bullet)
-                self.all_sprites.remove(bullet)
 
-        self.player.update(self.dt, self.w, self.h)
+        self.player.update(self.dt, self.bg_rect)
         self.rifle.update(
             self.player.position,
         )
@@ -190,7 +197,9 @@ class Main:
 
             self.main_game()
 
-            self.screen.blit(self.background)
+            self.bg_rect.topleft = self.bg_position.xy
+
+            self.screen.blit(self.background, self.bg_position)
 
             for entity in self.all_sprites:
                 entity.draw(self.screen)
@@ -200,7 +209,6 @@ class Main:
                 self.fps_text = self.fps_font.render(fps, True, "white")
 
             self.screen.blit(self.fps_text, (5, 0))
-
             ammo = f"Ammo: {self.player.ammo}"
             if ammo != self.prev_ammo:
                 self.ammo_text = self.fps_font.render(ammo, True, "white")
@@ -215,6 +223,16 @@ class Main:
                 self.kills_text,
                 (self.w - (self.kills_text.get_width() + 10), 0),
             )
+
+            # for row in range(self.rows):
+            #     for col in range(self.cols):
+            #         value = self.matrix[row][col]
+            #         x = col * self.tile_x
+            #         y = row * self.tile_y
+            #
+            #         if value == 0:
+            #             rect = pg.Rect(x, y, self.tile_x, self.tile_y)
+            #             pg.draw.rect(self.screen, (255, 255, 255, 255), rect)
 
             # for point in self.enemy.path[0]:
             #     pg.draw.circle(
@@ -252,6 +270,10 @@ class Main:
 
 
 if __name__ == "__main__":
-    matrix = np.ones((40, 40), dtype=int)
+    matrix = np.load(
+        os.path.join(
+            os.path.dirname(sys.argv[0]), "assets", "pathfinding_grid.npy"
+        )
+    )
     main = Main(matrix, 32, 18, 40, 40)
     asyncio.run(main.main())

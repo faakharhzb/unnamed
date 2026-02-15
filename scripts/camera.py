@@ -9,6 +9,7 @@ class Camera:
     ) -> None:
         self.focus = focus
         self.background_pos = background_pos
+        self.screen_size = pg.Vector2(pg.display.get_surface().get_size())
 
     def apply_offset(
         self, all_sprites: pg.sprite.Group
@@ -17,5 +18,7 @@ class Camera:
             entity.position -= self.focus.velocity
 
         self.background_pos -= self.focus.velocity
+
+        self.focus.position = self.screen_size // 2
 
         return all_sprites, self.background_pos

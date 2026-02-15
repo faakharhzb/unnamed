@@ -11,6 +11,8 @@ from pathfinding.finder.a_star import AStarFinder
 
 from typing import Iterable
 
+# TODO: fix issue with enemy and player getitng stuck
+
 
 class Entity(pg.sprite.Sprite):
     def __init__(
@@ -91,38 +93,64 @@ class Player(Entity):
         pos: list[int],
         image: pg.Surface | Iterable[pg.Surface],
         base_speed: int,
+        matrix: list | ndarray,
+        tile_x: int,
+        tile_y: int,
+        rows: int,
+        cols: int,
         frame_delay: float = 0.2,
     ) -> None:
         super().__init__(pos, image, base_speed, frame_delay)
-        self.ammo = 30
+        self.ammo = 24
         self.moved = False
         self.kill_count = 0
 
-    def update(self, dt: float, w: int, h: int) -> None:
+        self.rows, self.cols = rows, cols
+        self.matrix = matrix
+        self.tile_x, self.tile_y = tile_x, tile_y
+
+    def update(self, dt: float, bg_rect: pg.Rect) -> None:
         super().update(dt)
 
         up, down, left, right = False, False, False, False
         keys = pg.key.get_pressed()
 
+        velocity = pg.Vector2()
+
         if keys[pg.K_a]:
-            self.velocity.x = -1
+            velocity.x = -1
             left = True
         elif keys[pg.K_d]:
-            self.velocity.x = 1
+            velocity.x = 1
             right = True
-        else:
-            self.velocity.x = 0
-
-        if keys[pg.K_w]:
-            self.velocity.y = -1
+        elif keys[pg.K_w]:
+            velocity.y = -1
             up = True
         elif keys[pg.K_s]:
-            self.velocity.y = 1
+            velocity.y = 1
             down = True
-        else:
-            self.velocity.y = 0
 
-        self.position = super().clamp(self.position, pg.Vector2(0, 0), pg.Vector2(w, h))
+        pos = self.position + velocity * self.speed
+
+        col = int(pos.x // self.tile_x)
+        row = int(pos.y // self.tile_y)
+
+        if 0 <= row < self.rows and 0 <= col < self.cols:
+            if self.matrix[row][col] == 0:
+                velocity = pg.Vector2()
+                pos = self.position
+
+                (
+                    up,
+                    down,
+                    left,
+                    right,
+                ) = False, False, False, False
+
+        self.velocity = velocity
+        self.position = super().clamp(
+            pos, pg.Vector2(bg_rect.topleft), pg.Vector2(bg_rect.bottomright)
+        )
         self.moved = up or down or left or right
 
     def draw(self, screen: pg.Surface):
@@ -144,8 +172,7 @@ class Enemy(Entity):
         max_health: int = 4,
     ) -> None:
         super().__init__(pos, image, base_speed, frame_delay)
-        self.rows = rows
-        self.cols = cols
+        self.rows, self.cols = rows, cols
         self.matrix = matrix
         self.tile_x, self.tile_y = tile_x, tile_y
 
@@ -163,6 +190,18 @@ class Enemy(Entity):
         )
         self.health_bar_colour = "green"
         self.health_bar_outline = self.health_bar.inflate((3, 3))
+
+    @staticmethod
+    def get_random_position(
+        point: pg.Vector2, radius: int, mx: int, my: int
+    ) -> tuple[int, int]:
+        while True:
+            x = random.randint(0, mx)
+            y = random.randint(0, my)
+
+            dist = math.hypot(point.x - x, point.y - y)
+            if dist >= radius:
+                return x, y
 
     def find_path(self, target_pos: pg.Vector2, reason: str) -> list[GridNode, str]:
         self.start = self.grid.node(
