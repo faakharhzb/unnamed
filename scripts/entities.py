@@ -10,6 +10,7 @@ from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.finder.a_star import AStarFinder
 
 from typing import Iterable
+from .utilities import get_random_position
 
 # TODO: fix issue with enemy and player getitng stuck
 
@@ -120,13 +121,13 @@ class Player(Entity):
         if keys[pg.K_a]:
             velocity.x = -1
             left = True
-        elif keys[pg.K_d]:
+        if keys[pg.K_d]:
             velocity.x = 1
             right = True
-        elif keys[pg.K_w]:
+        if keys[pg.K_w]:
             velocity.y = -1
             up = True
-        elif keys[pg.K_s]:
+        if keys[pg.K_s]:
             velocity.y = 1
             down = True
 
@@ -149,7 +150,7 @@ class Player(Entity):
 
         self.velocity = velocity
         self.position = super().clamp(
-            pos, pg.Vector2(bg_rect.topleft), pg.Vector2(bg_rect.bottomright)
+            self.position, pg.Vector2(bg_rect.topleft), pg.Vector2(bg_rect.bottomright)
         )
         self.moved = up or down or left or right
 
@@ -190,18 +191,6 @@ class Enemy(Entity):
         )
         self.health_bar_colour = "green"
         self.health_bar_outline = self.health_bar.inflate((3, 3))
-
-    @staticmethod
-    def get_random_position(
-        point: pg.Vector2, radius: int, mx: int, my: int
-    ) -> tuple[int, int]:
-        while True:
-            x = random.randint(0, mx)
-            y = random.randint(0, my)
-
-            dist = math.hypot(point.x - x, point.y - y)
-            if dist >= radius:
-                return x, y
 
     def find_path(self, target_pos: pg.Vector2, reason: str) -> list[GridNode, str]:
         self.start = self.grid.node(
@@ -244,10 +233,15 @@ class Enemy(Entity):
 
         else:
             if self.path[1] != "roam" or len(self.path[0]) == 0:
-                roam_dest = pg.Vector2(
-                    random.randint(0, self.rows) * self.tile_x,
-                    random.randint(0, self.cols) * self.tile_y,
+                roam_dest = get_random_position(
+                    self.position,
+                    self.image.get_size(),
+                    0,
+                    self.rows * self.tile_x,
+                    self.cols * self.tile_y,
+                    self.matrix,
                 )
+                roam_dest = pg.Vector2(roam_dest)
                 self.path = self.find_path(roam_dest, "roam")
 
         if self.path[0]:
@@ -256,7 +250,7 @@ class Enemy(Entity):
             direction = self.target_pos - self.position
 
             if self.path[1] == "roam":
-                self.speed -= 0.3
+                self.speed -= 1
 
             self.velocity = direction
 
