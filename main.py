@@ -1,4 +1,4 @@
-import ez_profile
+from types import NoneType
 import os
 import numpy as np
 import pygame as pg
@@ -34,7 +34,7 @@ class Main:
                 "player/running", "white", scale=(5, 6)
             ),
             "enemy": load_image("enemy.png", "white", scale=1.1),
-            "rifle": load_image("guns/rifle.png", "white", scale=(2, 1.4)),
+            "rifle": load_image("guns/rifle.png", "white", scale=2.75),
             "background": load_image("background.png", "white"),
             "bullet": load_image("bullet.png", "white", scale=2),
         }
@@ -73,10 +73,11 @@ class Main:
             get_random_position(
                 self.player.position,
                 self.images["enemy"].get_size(),
-                100,
-                self.w,
-                self.h,
+                120,
+                self.bg_rect,
                 matrix,
+                tile_x,
+                tile_y,
             ),
             self.images["enemy"],
             self.player.base_speed - 1.3,
@@ -130,7 +131,7 @@ class Main:
             self.bullet_cooldown = pg.time.get_ticks()
 
             sound = self.audio["gunshot"]
-            sound.set_volume(0.7)
+            sound.set_volume(0.5)
             sound.play()
 
     def spawn_ammo(self) -> None:
@@ -143,9 +144,10 @@ class Main:
                     pg.Vector2(),
                     ammo_surface.get_size(),
                     0,
-                    self.w,
-                    self.h,
+                    self.bg_rect,
                     self.matrix,
+                    self.tile_x,
+                    self.tile_y,
                 ),
             )
             self.all_sprites.add(ammo)
@@ -156,10 +158,11 @@ class Main:
             get_random_position(
                 self.player.position,
                 self.images["enemy"].get_size(),
-                100,
-                self.w,
-                self.h,
+                10,
+                self.bg_rect,
                 self.matrix,
+                self.tile_x,
+                self.tile_y,
             ),
             self.images["enemy"],
             self.player.base_speed - 1.3,
@@ -187,10 +190,9 @@ class Main:
 
         if self.enemy is not None:
             if self.enemy.collision(self.player.rect):
-                print("hi")
                 self.running = False
 
-        if pg.time.get_ticks() - self.ammo_delay >= 6500:
+        if pg.time.get_ticks() - self.ammo_delay >= 6000:
             self.spawn_ammo()
             self.ammo_delay = pg.time.get_ticks()
 
@@ -201,6 +203,7 @@ class Main:
                 self.player.ammo += 12
 
                 sound = self.audio["reload"]
+                sound.set_volume(0.7)
                 sound.play()
 
         if pg.mouse.get_pressed() == (1, 0, 0):
@@ -208,10 +211,14 @@ class Main:
                 self.shoot()
             else:
                 sound = self.audio["empty_gun"]
+                sound.set_volume(0.7)
                 sound.play()
 
         if self.enemy is not None:
             for bullet in self.bullets:
+                if isinstance(self.enemy, NoneType):
+                    break
+
                 bullet.update(self.bg_rect, self.dt)
                 if bullet.hit(self.enemy.rect):
                     self.manage_hit()
@@ -219,7 +226,7 @@ class Main:
 
         if self.spawn_new_enemy:
             if pg.time.get_ticks() - self.new_enemy_delay >= random.randint(
-                200, 2000
+                200, 4000
             ):
                 self.spawn_enemy()
 
@@ -229,7 +236,7 @@ class Main:
         )
 
         if self.enemy is not None:
-            self.enemy.update(self.dt, self.w, self.h, self.player, 350)
+            self.enemy.update(self.dt, self.bg_rect, self.player, 350)
 
         if self.player.moved:
             self.player.set_state("running")
@@ -328,11 +335,10 @@ class Main:
 
 
 if __name__ == "__main__":
-    # matrix = np.load(
-    #     os.path.join(
-    #         os.path.dirname(sys.argv[0]), "assets", "pathfinding_grid.npy"
-    #     )
-    # )
-    matrix = np.ones((40, 40), int)
+    matrix = np.load(
+        os.path.join(
+            os.path.dirname(sys.argv[0]), "assets", "pathfinding_grid.npy"
+        )
+    )
     main = Main(matrix, 32, 18, 40, 40)
     asyncio.run(main.main())

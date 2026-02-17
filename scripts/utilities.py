@@ -1,3 +1,5 @@
+import time
+from numpy.testing import break_cycles
 import pygame as pg
 from numpy import ndarray
 import os
@@ -32,42 +34,35 @@ def load_images(
 
 
 def get_random_position(
-    point: pg.Vector2, size: Point, radius: int, mx: int, my: int, matrix: ndarray
+    point: pg.Vector2,
+    size: Point,
+    radius: int,
+    max_rect: pg.Rect,
+    matrix: ndarray,
+    tile_x: int,
+    tile_y: int,
 ) -> tuple[int, int]:
     while True:
-        x = random.randint(0, mx)
-        y = random.randint(0, my)
+        x = random.randint(max_rect.left + size[0], max_rect.width - size[0])
+        y = random.randint(max_rect.top + size[1], max_rect.height - size[1])
 
-        dist = math.hypot(point.x - x, point.y - y)
+        dist = point.distance_to((x, y))
         if dist < radius:
             continue
 
-        gx = x // matrix.shape[1]
-        gy = y // matrix.shape[0]
-        if matrix[gy][gx] == 0:
-            continue
-
+        valid = True
         rect = pg.Rect((x, y), size)
-        if not (
-            0 <= rect.left < mx
-            and 0 <= rect.right <= mx
-            and 0 <= rect.top < my
-            and 0 <= rect.bottom <= my
-        ):
+        rect.clamp_ip(max_rect)
+        for gy in range(rect.top, rect.bottom):
+            for gx in range(rect.left, rect.right):
+                if matrix[gy // tile_y][gx // tile_x] == 0:
+                    valid = False
+                    break
+
+            if not valid:
+                break
+
+        if not valid:
             continue
-
-        gw = mx // matrix.shape[1]
-        gh = my // matrix.shape[0]
-
-        # Clamp rect edges to matrix bounds
-        left = max(0, rect.left // gw)
-        right = min(matrix.shape[1] - 1, rect.right // gw)
-        top = max(0, rect.top // gh)
-        bottom = min(matrix.shape[0] - 1, rect.bottom // gh)
-
-        for gy in range(top, bottom + 1):
-            for gx in range(left, right + 1):
-                if matrix[gy][gx] == 0:
-                    continue
 
         return x, y

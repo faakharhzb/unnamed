@@ -12,8 +12,6 @@ from pathfinding.finder.a_star import AStarFinder
 from typing import Iterable
 from .utilities import get_random_position
 
-# TODO: fix issue with enemy and player getitng stuck
-
 
 class Entity(pg.sprite.Sprite):
     def __init__(
@@ -206,10 +204,12 @@ class Enemy(Entity):
         return [path, reason]
 
     def update(
-        self, dt: float, w: int, h: int, target: Entity, chase_distance: int
+        self, dt: float, max_rect: pg.Rect, target: Entity, chase_distance: int
     ) -> None:
         super().update(dt)
-        self.position = super().clamp(self.position, pg.Vector2(), pg.Vector2(w, h))
+        self.position = super().clamp(
+            self.position, pg.Vector2(), pg.Vector2(max_rect.size)
+        )
 
         if not self.path:
             self.path = self.find_path(target.position, "roam")
@@ -237,9 +237,10 @@ class Enemy(Entity):
                     self.position,
                     self.image.get_size(),
                     0,
-                    self.rows * self.tile_x,
-                    self.cols * self.tile_y,
+                    max_rect,
                     self.matrix,
+                    self.tile_x,
+                    self.tile_y
                 )
                 roam_dest = pg.Vector2(roam_dest)
                 self.path = self.find_path(roam_dest, "roam")
@@ -250,9 +251,11 @@ class Enemy(Entity):
             direction = self.target_pos - self.position
 
             if self.path[1] == "roam":
-                self.speed -= 1
+                speed = pg.Vector2(-1).normalize()
+            else:
+                speed = pg.Vector2(1).normalize()
 
-            self.velocity = direction
+            self.velocity = direction + speed
 
             if self.rect.collidepoint(self.target_pos):
                 self.path[0].pop(0)

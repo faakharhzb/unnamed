@@ -83,8 +83,15 @@ class Gun(Sprite):
             self.image = self.cache[self.angle][0]
             self.rect = self.cache[self.angle][1]
         else:
+            if 90 <= self.angle <= 270:
+                self.image = pg.transform.flip(self.base_image, False, True)
+                flipped = True
+            else:
+                self.image = self.base_image.copy()
+                flipped = False
+
             self.image = pg.transform.rotate(
-                self.base_image,
+                self.image,
                 -self.angle,
             )
 
