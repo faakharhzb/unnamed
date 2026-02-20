@@ -53,7 +53,6 @@ class Obtainable_Item(Sprite):
 
 
 class Gun(Sprite):
-    # TODO: fix gun jittering
     def __init__(self, image: pg.Surface, pos: list[int, int]) -> None:
         super().__init__()
         self.base_image = image
@@ -70,7 +69,7 @@ class Gun(Sprite):
         x = mousepos[0] - pos.x
         y = mousepos[1] - pos.y
 
-        angle = int(math.degrees(math.atan2(y, x)))
+        angle = round(math.degrees(math.atan2(y, x)))
         angle = (angle + 360) % 360
         return angle
 
@@ -85,10 +84,8 @@ class Gun(Sprite):
         else:
             if 90 <= self.angle <= 270:
                 self.image = pg.transform.flip(self.base_image, False, True)
-                flipped = True
             else:
                 self.image = self.base_image.copy()
-                flipped = False
 
             self.image = pg.transform.rotate(
                 self.image,

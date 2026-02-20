@@ -171,6 +171,7 @@ class Enemy(Entity):
         max_health: int = 4,
     ) -> None:
         super().__init__(pos, image, base_speed, frame_delay)
+
         self.rows, self.cols = rows, cols
         self.matrix = matrix
         self.tile_x, self.tile_y = tile_x, tile_y
@@ -211,8 +212,18 @@ class Enemy(Entity):
             self.position, pg.Vector2(), pg.Vector2(max_rect.size)
         )
 
+        roam_dest = pg.Vector2(get_random_position(
+            self.position,
+            self.image.get_size(),
+            0,
+            max_rect,
+            self.matrix,
+            self.tile_x,
+            self.tile_y,
+        ))
+
         if not self.path:
-            self.path = self.find_path(target.position, "roam")
+            self.path = self.find_path(roam_dest, "roam")
 
         distance = self.position.distance_to(target.position)
 
@@ -233,15 +244,6 @@ class Enemy(Entity):
 
         else:
             if self.path[1] != "roam" or len(self.path[0]) == 0:
-                roam_dest = get_random_position(
-                    self.position,
-                    self.image.get_size(),
-                    0,
-                    max_rect,
-                    self.matrix,
-                    self.tile_x,
-                    self.tile_y
-                )
                 roam_dest = pg.Vector2(roam_dest)
                 self.path = self.find_path(roam_dest, "roam")
 
@@ -251,11 +253,11 @@ class Enemy(Entity):
             direction = self.target_pos - self.position
 
             if self.path[1] == "roam":
-                speed = pg.Vector2(-1).normalize()
+                self.velocity = 0.5
             else:
-                speed = pg.Vector2(1).normalize()
+                self.velocity = 1
 
-            self.velocity = direction + speed
+            self.velocity *= direction
 
             if self.rect.collidepoint(self.target_pos):
                 self.path[0].pop(0)
