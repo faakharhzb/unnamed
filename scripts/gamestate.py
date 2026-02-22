@@ -2,6 +2,6 @@ from enum import Enum
 
 
 class GameState(Enum):
-    menu = 0
-    main_game = 1
+    main_menu = 0
+    game = 1
     settings = 2

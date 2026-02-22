@@ -1,10 +1,8 @@
 import time
-from numpy.testing import break_cycles
 import pygame as pg
 from numpy import ndarray
 import os
 import random
-import math
 
 from pygame.typing import Point
 
@@ -18,10 +16,12 @@ def load_image(
     image = pg.image.load(os.path.join("./assets/images", image_path))
     image = pg.transform.scale_by(image, scale)
     image.set_colorkey(colorkey) if not alpha else False
-    return image.convert_alpha() if alpha else image.convert()
+    image = image.convert_alpha() if alpha else image.convert()
+    return image
 
 
 def load_images(
+
     image_path: str,
     colorkey: pg.Color,
     alpha: bool = False,
@@ -43,8 +43,8 @@ def get_random_position(
     tile_y: int,
 ) -> tuple[int, int]:
     while True:
-        x = random.randint(max_rect.left + size[0], max_rect.width - size[0])
-        y = random.randint(max_rect.top + size[1], max_rect.height - size[1])
+        x = random.randint(max_rect.left + size[0], max_rect.right - size[0])
+        y = random.randint(max_rect.top + size[1], max_rect.bottom - size[1])
 
         dist = point.distance_to((x, y))
         if dist < radius:

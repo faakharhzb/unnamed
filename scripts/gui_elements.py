@@ -3,18 +3,46 @@ from pygame.typing import ColorLike, Point
 
 
 class Button:
-    def __init__(self, image: pg.Surface, position: Point) -> None:
+    def __init__(
+        self,
+        image: pg.Surface,
+        position: Point,
+        sound: pg.Sound | None = None,
+        surround_size: Point | None = None,
+    ) -> None:
         self.image = image
         self.rect = image.get_rect(center=position)
+        if surround_size is not None:
+            self.surround_rect = pg.Rect(0, 0, *surround_size)
+        else:
+            self.surround_rect = pg.Rect(0, 0, 300, 70)
+
+        self.surround_rect.center = position
+
+        self.sound = sound
+
+        self.show_outline = False
 
     def hovered(self) -> bool:
-        return self.rect.collidepoint(pg.mouse.get_pos())
+        hovered = self.rect.collidepoint(pg.mouse.get_pos())
+        if hovered:
+            self.show_outline = True
+        else:
+            self.show_outline = False
+
+        return hovered
 
     def clicked(self) -> bool:
-        return pg.mouse.get_just_pressed()[0] if self.hovered() else False
+        clicked = pg.mouse.get_just_pressed()[0] if self.hovered() else False
+        if clicked and self.sound is not None:
+            self.sound.play()
+
+        return clicked
 
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(self.image, self.rect)
+        if self.show_outline:
+            pg.draw.rect(screen, "black", self.surround_rect, 4)
 
 
 class DropDown:
@@ -48,8 +76,6 @@ class DropDown:
         self.options = list(options)
         self.options_items = []
         for idx, option in enumerate(self.options):
-            opts = []
-
             rect = pg.Rect(0, 0, *size)
             rect.center = (
                 self.main_option_rect.centerx,

@@ -75,12 +75,10 @@ class Gun(Sprite):
 
     def update(self, pos: pg.Vector2) -> None:
         self.angle = self.get_angle(pos)
-        self.position = pos
-        self.rect.center = self.position.x, self.position.y
+        rounded_angle = round(self.angle / 3) * 3
 
         if self.angle in self.cache:
-            self.image = self.cache[self.angle][0]
-            self.rect = self.cache[self.angle][1]
+            self.image = self.cache[rounded_angle]
         else:
             if 90 <= self.angle <= 270:
                 self.image = pg.transform.flip(self.base_image, False, True)
@@ -89,11 +87,13 @@ class Gun(Sprite):
 
             self.image = pg.transform.rotate(
                 self.image,
-                -self.angle,
+                -rounded_angle,
             )
 
-            self.rect = self.image.get_rect(center=self.position)
-            self.cache[self.angle] = [self.image, self.rect.copy()]
+            self.cache[rounded_angle] = self.image
+
+        self.rect.center = pos.xy
+        self.rect.size = self.image.get_size()
 
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(

@@ -1,7 +1,4 @@
 from itertools import cycle
-import math
-import random
-import time
 from numpy import ndarray
 import pygame as pg
 
@@ -13,57 +10,78 @@ from typing import Iterable
 from .utilities import get_random_position
 
 
+import pygame as pg
+from itertools import cycle
+
+
 class Entity(pg.sprite.Sprite):
     def __init__(
         self,
         pos: list[int],
         image: pg.Surface | dict[str, list[pg.Surface]],
-        speed: int,
+        speed: float,
         frame_delay: float = 0.2,
     ) -> None:
         super().__init__()
 
         self.animations: dict[str, cycle] = {}
+        self.flipped_animations: dict[str, cycle] = {}
+
+        self.image_iter: cycle | None = None
         self.state = "idle"
+        self._flipped = False
 
         if isinstance(image, pg.Surface):
             self.image = image
-            self.image_iter = None
+            self.flipped_image = pg.transform.flip(image, True, False)
         elif isinstance(image, dict):
             for state, frames in image.items():
                 self.animations[state] = cycle(frames)
+                self.flipped_animations[state] = cycle(
+                    [pg.transform.flip(frame, True, False) for frame in frames]
+                )
 
-            self.state = next(cycle(image.keys()))
+            self.state = next(iter(image))
             self.image_iter = self.animations[self.state]
             self.image = next(self.image_iter)
+
+        else:
+            raise TypeError("image must be Surface or dict[str, list[Surface]]")
 
         self.rect = self.image.get_rect(center=pos)
         self.position = pg.Vector2(pos)
         self.velocity = pg.Vector2()
 
         self.base_speed = speed
-        self.speed = speed
-
         self.frame_delay = frame_delay
         self.frame_timer = 0.0
 
+    def set_flipped(self, flipped: bool) -> None:
+        if self._flipped != flipped:
+            self._flipped = flipped
+            if self.image_iter:
+                animations = self.flipped_animations if flipped else self.animations
+                self.image_iter = animations[self.state]
+                self.image = next(self.image_iter)
+
     def set_state(self, state: str) -> None:
-        if state in self.animations and state != self.state:
+        animations = self.flipped_animations if self._flipped else self.animations
+
+        if state != self.state and state in animations:
             self.state = state
-            self.image_iter = self.animations[state]
+            self.image_iter = animations[state]
             self.image = next(self.image_iter)
             self.frame_timer = 0.0
 
     def update(self, dt: float) -> None:
-        self.speed = self.base_speed * dt
         if self.velocity.length() >= 1:
             self.velocity = self.velocity.normalize()
 
-        self.position += self.velocity * self.speed
+        self.position += self.velocity * self.base_speed * dt
         self.rect.center = self.position
 
         if self.image_iter:
-            self.frame_timer += dt / 60
+            self.frame_timer += dt
             if self.frame_timer >= self.frame_delay:
                 self.image = next(self.image_iter)
                 self.frame_timer = 0.0
@@ -129,7 +147,7 @@ class Player(Entity):
             velocity.y = 1
             down = True
 
-        pos = self.position + velocity * self.speed
+        pos = self.position + velocity * self.base_speed * dt
 
         col = int(pos.x // self.tile_x)
         row = int(pos.y // self.tile_y)
@@ -148,7 +166,9 @@ class Player(Entity):
 
         self.velocity = velocity
         self.position = super().clamp(
-            self.position, pg.Vector2(bg_rect.topleft), pg.Vector2(bg_rect.bottomright)
+            self.position,
+            pg.Vector2(bg_rect.topleft),
+            pg.Vector2(bg_rect.bottomright),
         )
         self.moved = up or down or left or right
 
@@ -212,18 +232,21 @@ class Enemy(Entity):
             self.position, pg.Vector2(), pg.Vector2(max_rect.size)
         )
 
-        roam_dest = pg.Vector2(get_random_position(
-            self.position,
-            self.image.get_size(),
-            0,
-            max_rect,
-            self.matrix,
-            self.tile_x,
-            self.tile_y,
-        ))
-
         if not self.path:
+            roam_dest = pg.Vector2(
+                get_random_position(
+                    self.position,
+                    self.image.get_size(),
+                    0,
+                    max_rect,
+                    self.matrix,
+                    self.tile_x,
+                    self.tile_y,
+                )
+            )
             self.path = self.find_path(roam_dest, "roam")
+        else:
+            roam_dest = []
 
         distance = self.position.distance_to(target.position)
 
@@ -244,7 +267,19 @@ class Enemy(Entity):
 
         else:
             if self.path[1] != "roam" or len(self.path[0]) == 0:
-                roam_dest = pg.Vector2(roam_dest)
+                roam_dest = pg.Vector2(
+                    roam_dest
+                    if roam_dest
+                    else get_random_position(
+                        self.position,
+                        self.image.get_size(),
+                        0,
+                        max_rect,
+                        self.matrix,
+                        self.tile_x,
+                        self.tile_y,
+                    )
+                )
                 self.path = self.find_path(roam_dest, "roam")
 
         if self.path[0]:
@@ -253,11 +288,9 @@ class Enemy(Entity):
             direction = self.target_pos - self.position
 
             if self.path[1] == "roam":
-                self.velocity = 0.5
+                self.velocity = direction * 0.3
             else:
-                self.velocity = 1
-
-            self.velocity *= direction
+                self.velocity = direction * 1
 
             if self.rect.collidepoint(self.target_pos):
                 self.path[0].pop(0)
