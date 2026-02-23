@@ -33,12 +33,10 @@ class MainMenu:
             "white",
         )
 
-        self.play_button = Button(play_surf, (self.w // 2, self.h // 2), self.click_sound)
-        settings_surf = self.menu_font.render(
-            "Settings",
-            True,
-            "white"
+        self.play_button = Button(
+            play_surf, (self.w // 2, self.h // 2), self.click_sound
         )
+        settings_surf = self.menu_font.render("Settings", True, "white")
         self.settings_button = Button(
             settings_surf, (self.w // 2, self.h - self.h / 2.7), self.click_sound
         )
@@ -48,7 +46,9 @@ class MainMenu:
             True,
             "white",
         )
-        self.exit_button = Button(exit_surf, (self.w // 2, self.h - self.h / 4), self.click_sound)
+        self.exit_button = Button(
+            exit_surf, (self.w // 2, self.h - self.h / 4), self.click_sound
+        )
 
         self.menu_buttons = [
             self.play_button,
@@ -56,14 +56,16 @@ class MainMenu:
             self.exit_button,
         ]
 
-    def update(self) -> tuple[GameState, bool, int]:
+    def update(self) -> tuple[GameState, bool, int, bool]:
         game_state = GameState.main_menu
         running = True
         game_start_delay = 0
+        new_game = False
 
         if self.play_button.clicked():
             game_start_delay = pg.time.get_ticks()
             game_state = GameState.game
+            new_game = True
         elif self.settings_button.clicked():
             game_state = GameState.settings
         elif self.exit_button.clicked():
@@ -73,7 +75,7 @@ class MainMenu:
             self.name_y + math.sin(pg.time.get_ticks() * 0.005) * 50
         )
 
-        return game_state, running, game_start_delay
+        return game_state, running, game_start_delay, new_game
 
     def render(self, display: pg.Surface) -> None:
         display.blit(self.name_surf, self.name_rect)

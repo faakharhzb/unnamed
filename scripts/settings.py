@@ -9,6 +9,7 @@ class Settings:
         self.w, self.h = self.screen.get_size()
 
         self.font = pg.Font(size=32)
+        self.click_sound = pg.Sound("assets/audio/button_click.ogg")
 
         self.fps_dropdown = DropDown(
             "FPS: ",
@@ -18,6 +19,7 @@ class Settings:
             [30, 60, 90, 120, 240, "Uncapped"],
             self.font,
             "black",
+            sound=self.click_sound
         )
         self.dropdowns = [self.fps_dropdown]
 

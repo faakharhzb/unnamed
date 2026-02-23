@@ -68,7 +68,7 @@ class Game:
             tile_y,
             rows,
             cols,
-            0.4
+            0.4,
         )
         self.rifle = Gun(self.images["rifle"], self.player.rect.center)
         self.enemy = Enemy(
@@ -104,6 +104,27 @@ class Game:
 
         self.prev_fps = 0
         self.fps_text = pg.Surface((10, 10))
+
+        self.prev_ammo = 0
+        self.ammo_text = pg.Surface((10, 10))
+
+        self.prev_kills = 0
+        self.kills_text = pg.Surface((10, 10))
+
+    def reset(self) -> None:
+        self.all_sprites.empty()
+        self.bullets.empty()
+        self.ammos.empty()
+
+        self.player.kill_count = 0
+        self.player.ammo = 24
+        self.player.position.update([self.w // 2, self.h // 2])
+        self.player.set_flipped(False)
+        self.all_sprites.add(self.player)
+
+        self.spawn_enemy()
+
+        self.all_sprites.add(self.rifle)
 
         self.prev_ammo = 0
         self.ammo_text = pg.Surface((10, 10))
@@ -240,7 +261,7 @@ class Game:
             self.player.set_state("idle")
 
         if 90 <= self.rifle.angle <= 270:
-                self.player.set_flipped(True)
+            self.player.set_flipped(True)
         else:
             self.player.set_flipped(False)
 

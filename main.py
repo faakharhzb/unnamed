@@ -1,6 +1,5 @@
 import numpy as np
 import pygame as pg
-import moderngl as mgl
 
 import sys
 import os
@@ -10,6 +9,7 @@ from scripts.gamestate import GameState
 from scripts.game import Game
 from scripts.main_menu import MainMenu
 from scripts.settings import Settings
+from scripts.pause_menu import PauseMenu
 
 
 class Main:
@@ -22,7 +22,7 @@ class Main:
         cols: int,
     ) -> None:
         self.matrix = matrix
-        self.tile_x, self.tile_y = tile_x + 1, tile_y + 1
+        self.tile_x, self.tile_y = tile_x, tile_y
         self.rows, self.cols = rows, cols
 
         pg.init()
@@ -54,8 +54,12 @@ class Main:
         )
         self.main_menu = MainMenu(self.screen)
         self.settings = Settings(self.screen)
+        self.pause_menu = PauseMenu(self.screen)
 
         self.game_state = GameState.main_menu
+        self.new_game = False
+
+        self.dt = 1
 
     def main(self) -> None:
         self.running = True
@@ -65,18 +69,31 @@ class Main:
             self.screen.blit(self.background)
 
             if self.game_state == GameState.game:
+                if self.new_game:
+                    self.game.reset()
+                    self.new_game = False
+
                 self.running = self.game.update(self.dt)
                 self.game.render(self.screen)
             elif self.game_state == GameState.main_menu:
-                self.game_state, self.running, self.game_start_delay = (
-                    self.main_menu.update()
-                )
+                (
+                    self.game_state,
+                    self.running,
+                    self.game_start_delay,
+                    self.new_game,
+                ) = self.main_menu.update()
                 self.main_menu.render(self.screen)
 
                 self.game.game_start_delay = self.game_start_delay
             elif self.game_state == GameState.settings:
                 self.settings.update()
                 self.settings.render(self.screen)
+            elif self.game_state == GameState.pause_menu:
+                self.game_state, self.game_start_delay = (
+                    self.pause_menu.update()
+                )
+                self.game.game_start_delay = self.game_start_delay
+                self.pause_menu.render(self.screen)
 
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -84,11 +101,10 @@ class Main:
 
                 if event.type == pg.KEYDOWN:
                     if event.key == pg.K_ESCAPE:
-                        if self.game_state in [
-                            GameState.game,
-                            GameState.settings,
-                        ]:
+                        if self.game_state == GameState.settings:
                             self.game_state = GameState.main_menu
+                        elif self.game_state == GameState.game:
+                            self.game_state = GameState.pause_menu
 
             self.dt = (self.clock.tick(self.settings.fps) / 1000) * 60
 
