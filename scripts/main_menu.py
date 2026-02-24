@@ -4,6 +4,7 @@ import math
 
 from scripts.gui_elements import Button
 from scripts.gamestate import GameState
+from scripts.utilities import load_audio
 
 
 class MainMenu:
@@ -21,11 +22,13 @@ class MainMenu:
             pg.display.get_caption()[0], True, "white"
         )
 
-        self.click_sound = pg.mixer.Sound("assets/audio/button_click.ogg")
+        self.click_sound = load_audio("button_click.ogg", 0.85)
 
         self.name_x = self.w // 2
         self.name_y = self.h // 5
-        self.name_rect = self.name_surf.get_rect(center=(self.name_x, self.name_y))
+        self.name_rect = self.name_surf.get_rect(
+            center=(self.name_x, self.name_y)
+        )
 
         play_surf = self.menu_font.render(
             "Play Game",
@@ -38,7 +41,9 @@ class MainMenu:
         )
         settings_surf = self.menu_font.render("Settings", True, "white")
         self.settings_button = Button(
-            settings_surf, (self.w // 2, self.h - self.h / 2.7), self.click_sound
+            settings_surf,
+            (self.w // 2, self.h - self.h / 2.7),
+            self.click_sound,
         )
 
         exit_surf = self.menu_font.render(

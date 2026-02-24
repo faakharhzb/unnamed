@@ -122,7 +122,9 @@ class DropDown:
 
                 self.main_option_button.image = main_option_surf
                 self.main_option_button.rect.size = main_option_surf.get_size()
-                self.main_option_button.rect.center = self.main_option_rect.center
+                self.main_option_button.rect.center = (
+                    self.main_option_rect.center
+                )
                 return option
 
         return False

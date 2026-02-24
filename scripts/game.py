@@ -1,12 +1,14 @@
-import math
-import os
 import numpy as np
 import pygame as pg
 
-import sys
 import random
 
-from scripts.utilities import get_random_position, load_image, load_images
+from scripts.utilities import (
+    get_random_position,
+    load_image,
+    load_images,
+    load_audio,
+)
 from scripts.entities import Player, Enemy
 from scripts.objects import Bullet, Obtainable_Item, Gun
 
@@ -36,16 +38,18 @@ class Game:
 
         self.images = {
             "player_idle": load_images("player/idle", "white", scale=(5, 6)),
-            "player_running": load_images("player/running", "white", scale=(5, 6)),
+            "player_running": load_images(
+                "player/running", "white", scale=(5, 6)
+            ),
             "enemy": load_image("enemy.png", "white", scale=1.1),
             "rifle": load_image("guns/rifle.png", "white", scale=2.75),
             "bullet": load_image("bullet.png", "white", scale=2),
             "ammo": load_image("ammo.png", "white"),
         }
         self.audio = {
-            "gunshot": pg.mixer.Sound("assets/audio/gunshot.ogg"),
-            "empty_gun": pg.mixer.Sound("assets/audio/empty_gun.ogg"),
-            "reload": pg.mixer.Sound("assets/audio/reload.ogg"),
+            "gunshot": load_audio("gunshot.ogg", 0.4),
+            "empty_gun": load_audio("empty_gun.ogg", 0.7),
+            "reload": load_audio("reload.ogg", 0.7),
         }
 
         self.images["ammo"] = pg.transform.scale(self.images["ammo"], (60, 54))
@@ -68,7 +72,7 @@ class Game:
             tile_y,
             rows,
             cols,
-            0.4,
+            250,
         )
         self.rifle = Gun(self.images["rifle"], self.player.rect.center)
         self.enemy = Enemy(
@@ -148,7 +152,6 @@ class Game:
             self.bullet_cooldown = pg.time.get_ticks()
 
             sound = self.audio["gunshot"]
-            sound.set_volume(0.5)
             sound.play()
 
     def spawn_ammo(self) -> None:
@@ -223,7 +226,6 @@ class Game:
                 self.player.ammo += 12
 
                 sound = self.audio["reload"]
-                sound.set_volume(0.7)
                 sound.play()
 
         if pg.mouse.get_pressed() == (1, 0, 0):
@@ -231,7 +233,6 @@ class Game:
                 self.shoot()
             else:
                 sound = self.audio["empty_gun"]
-                sound.set_volume(0.7)
                 sound.play()
 
         for bullet in self.bullets:
@@ -244,7 +245,9 @@ class Game:
                 bullet.kill()
 
         if self.spawn_new_enemy:
-            if pg.time.get_ticks() - self.new_enemy_delay >= random.randint(250, 5000):
+            if pg.time.get_ticks() - self.new_enemy_delay >= random.randint(
+                250, 5000
+            ):
                 self.spawn_enemy()
 
         self.player.update(self.dt, self.bg_rect)

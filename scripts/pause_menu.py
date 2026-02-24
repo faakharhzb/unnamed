@@ -1,8 +1,8 @@
 import pygame as pg
-import math
 
 from scripts.gui_elements import Button
 from scripts.gamestate import GameState
+from scripts.utilities import load_audio
 
 
 class PauseMenu:
@@ -18,11 +18,13 @@ class PauseMenu:
 
         self.title_surf = self.title_font.render("Game Paused", True, "white")
 
-        self.click_sound = pg.mixer.Sound("assets/audio/button_click.ogg")
+        self.click_sound = load_audio("button_click.ogg", 0.85)
 
         self.title_x = self.w // 2
         self.title_y = self.h // 5
-        self.title_rect = self.title_surf.get_rect(center=(self.title_x, self.title_y))
+        self.title_rect = self.title_surf.get_rect(
+            center=(self.title_x, self.title_y)
+        )
 
         resume_surf = self.menu_font.render(
             "Resume Game",
@@ -39,7 +41,9 @@ class PauseMenu:
             "white",
         )
         self.back_to_main_button = Button(
-            back_to_main_surf, (self.w // 2, self.h - self.h / 4), self.click_sound
+            back_to_main_surf,
+            (self.w // 2, self.h - self.h / 2.7),
+            self.click_sound,
         )
 
         self.menu_buttons = [
@@ -56,10 +60,6 @@ class PauseMenu:
             game_state = GameState.game
         elif self.back_to_main_button.clicked():
             game_state = GameState.main_menu
-
-        self.title_rect.centery = (
-            self.title_y + math.sin(pg.time.get_ticks() * 0.005) * 50
-        )
 
         return game_state, game_start_delay
 

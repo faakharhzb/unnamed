@@ -1,4 +1,3 @@
-import time
 import pygame as pg
 from numpy import ndarray
 import os
@@ -21,7 +20,6 @@ def load_image(
 
 
 def load_images(
-
     image_path: str,
     colorkey: pg.Color,
     alpha: bool = False,
@@ -29,8 +27,20 @@ def load_images(
 ) -> list[pg.Surface]:
     return [
         load_image(os.path.join(image_path, image), colorkey, alpha, scale)
-        for image in sorted(os.listdir(os.path.join("./assets/images", image_path)))
+        for image in sorted(
+            os.listdir(os.path.join("./assets/images", image_path))
+        )
     ]
+
+
+def load_audio(audio_path: str, volume: float = 1.0) -> pg.Sound:
+    audio_path = os.path.join("./assets/audio", audio_path)
+    if not os.path.exists(audio_path):
+        raise FileNotFoundError("No such audio file:", audio_path)
+
+    audio = pg.Sound(audio_path)
+    audio.set_volume(min(1.0, max(0, volume)))
+    return audio
 
 
 def get_random_position(

@@ -10,17 +10,13 @@ from typing import Iterable
 from .utilities import get_random_position
 
 
-import pygame as pg
-from itertools import cycle
-
-
 class Entity(pg.sprite.Sprite):
     def __init__(
         self,
         pos: list[int],
         image: pg.Surface | dict[str, list[pg.Surface]],
         speed: float,
-        frame_delay: float = 0.2,
+        frame_delay: int = 250,
     ) -> None:
         super().__init__()
 
@@ -46,7 +42,9 @@ class Entity(pg.sprite.Sprite):
             self.image = next(self.image_iter)
 
         else:
-            raise TypeError("image must be Surface or dict[str, list[Surface]]")
+            raise TypeError(
+                "image must be Surface or dict[str, list[Surface]]"
+            )
 
         self.rect = self.image.get_rect(center=pos)
         self.position = pg.Vector2(pos)
@@ -54,24 +52,28 @@ class Entity(pg.sprite.Sprite):
 
         self.base_speed = speed
         self.frame_delay = frame_delay
-        self.frame_timer = 0.0
+        self.frame_timer = pg.time.get_ticks()
 
     def set_flipped(self, flipped: bool) -> None:
         if self._flipped != flipped:
             self._flipped = flipped
             if self.image_iter:
-                animations = self.flipped_animations if flipped else self.animations
+                animations = (
+                    self.flipped_animations if flipped else self.animations
+                )
                 self.image_iter = animations[self.state]
                 self.image = next(self.image_iter)
 
     def set_state(self, state: str) -> None:
-        animations = self.flipped_animations if self._flipped else self.animations
+        animations = (
+            self.flipped_animations if self._flipped else self.animations
+        )
 
         if state != self.state and state in animations:
             self.state = state
             self.image_iter = animations[state]
             self.image = next(self.image_iter)
-            self.frame_timer = 0.0
+            self.frame_timer = pg.time.get_ticks()
 
     def update(self, dt: float) -> None:
         if self.velocity.length() >= 1:
@@ -81,10 +83,9 @@ class Entity(pg.sprite.Sprite):
         self.rect.center = self.position
 
         if self.image_iter:
-            self.frame_timer += dt
-            if self.frame_timer >= self.frame_delay:
+            if pg.time.get_ticks() - self.frame_timer >= self.frame_delay:
                 self.image = next(self.image_iter)
-                self.frame_timer = 0.0
+                self.frame_timer = pg.time.get_ticks()
 
     def draw(self, screen: pg.Surface) -> None:
         screen.blit(self.image, self.rect)
@@ -211,7 +212,9 @@ class Enemy(Entity):
         self.health_bar_colour = "green"
         self.health_bar_outline = self.health_bar.inflate((3, 3))
 
-    def find_path(self, target_pos: pg.Vector2, reason: str) -> list[GridNode, str]:
+    def find_path(
+        self, target_pos: pg.Vector2, reason: str
+    ) -> list[GridNode, str]:
         self.start = self.grid.node(
             min(int(self.position.x // self.tile_x), self.rows - 1),
             min(int(self.position.y // self.tile_y), self.cols - 1),
@@ -252,7 +255,9 @@ class Enemy(Entity):
 
         if self.path[0]:
             end_pos = self.path[0][-1]
-            end_pos = pg.Vector2(end_pos.x * self.tile_x, end_pos.y * self.tile_y)
+            end_pos = pg.Vector2(
+                end_pos.x * self.tile_x, end_pos.y * self.tile_y
+            )
             target_to_end_dist = end_pos.distance_to(target.position)
         else:
             target_to_end_dist = float("inf")
@@ -284,7 +289,9 @@ class Enemy(Entity):
 
         if self.path[0]:
             point = self.path[0][0]
-            self.target_pos = pg.Vector2(point.x * self.tile_x, point.y * self.tile_y)
+            self.target_pos = pg.Vector2(
+                point.x * self.tile_x, point.y * self.tile_y
+            )
             direction = self.target_pos - self.position
 
             if self.path[1] == "roam":
